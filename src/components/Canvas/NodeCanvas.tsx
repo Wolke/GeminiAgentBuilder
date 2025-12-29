@@ -8,10 +8,12 @@ import {
     MiniMap,
     BackgroundVariant,
     NodeTypes,
+    EdgeTypes,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '../../stores';
 import { StartNode, AgentNode, ToolNode, ConditionNode, OutputNode } from '../Nodes';
+import { CustomEdge } from './CustomEdge';
 import './NodeCanvas.css';
 
 const nodeTypes: NodeTypes = {
@@ -20,6 +22,10 @@ const nodeTypes: NodeTypes = {
     tool: ToolNode,
     condition: ConditionNode,
     output: OutputNode,
+};
+
+const edgeTypes: EdgeTypes = {
+    default: CustomEdge,
 };
 
 export function NodeCanvas() {
@@ -63,6 +69,7 @@ export function NodeCanvas() {
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
                 nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
                 nodesDraggable={!isRunMode}
                 nodesConnectable={!isRunMode}
                 elementsSelectable={!isRunMode}
@@ -72,8 +79,7 @@ export function NodeCanvas() {
                 proOptions={{ hideAttribution: true }}
                 defaultEdgeOptions={{
                     style: { stroke: '#5865f2', strokeWidth: 2 },
-                    animated: true,
-                    selectable: true,
+                    type: 'default',
                 }}
             >
                 <Background

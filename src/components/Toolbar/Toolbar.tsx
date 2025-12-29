@@ -31,12 +31,31 @@ export function Toolbar() {
         updateSettings,
         execution,
         resetExecution,
+        nodes,
     } = useWorkflowStore();
 
     const handleAddNode = (type: NodeType) => {
-        const x = 100 + Math.random() * 300;
-        const y = 100 + Math.random() * 200;
-        addNode(type, { x, y });
+        // Calculate position that doesn't overlap with existing nodes
+        const NODE_WIDTH = 200;
+        const NODE_HEIGHT = 120;
+        const PADDING = 30;
+
+        if (nodes.length === 0) {
+            // First node - place at center-ish location
+            addNode(type, { x: 100, y: 150 });
+            return;
+        }
+
+        // Find the rightmost node
+        const rightmostNode = nodes.reduce((max, node) =>
+            node.position.x > max.position.x ? node : max
+            , nodes[0]);
+
+        // Place new node to the right of the rightmost node
+        const newX = rightmostNode.position.x + NODE_WIDTH + PADDING;
+        const newY = rightmostNode.position.y;
+
+        addNode(type, { x: newX, y: newY });
     };
 
     const isRunning = execution.status === 'running';
