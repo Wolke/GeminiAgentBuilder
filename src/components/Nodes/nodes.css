@@ -21,6 +21,27 @@
   box-shadow: 0 0 0 3px rgba(88, 101, 242, 0.3);
 }
 
+@keyframes node-glow {
+  0% {
+    box-shadow: 0 0 5px rgba(88, 101, 242, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 20px rgba(88, 101, 242, 0.6);
+  }
+
+  100% {
+    box-shadow: 0 0 5px rgba(88, 101, 242, 0.2);
+  }
+}
+
+.custom-node.executing {
+  animation: node-glow 1.5s infinite ease-in-out;
+  border-color: #ffffff !important;
+  transform: scale(1.02);
+  z-index: 1000;
+}
+
 .node-header {
   display: flex;
   align-items: center;
@@ -47,7 +68,7 @@
   color: #a0a0b0;
 }
 
-.node-content > * + * {
+.node-content>*+* {
   margin-top: 6px;
 }
 

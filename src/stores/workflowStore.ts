@@ -60,6 +60,15 @@ const createDefaultNodeData = (type: NodeType): WorkflowNode['data'] => {
     }
 };
 
+export type AppMode = 'edit' | 'run';
+
+export interface ChatMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    timestamp: number;
+}
+
 interface WorkflowState {
     // Current workflow
     nodes: WorkflowNode[];
@@ -78,6 +87,12 @@ interface WorkflowState {
 
     // App settings
     settings: AppSettings;
+
+    // App mode (edit or run)
+    appMode: AppMode;
+
+    // Chat messages for run mode
+    chatMessages: ChatMessage[];
 
     // Actions
     onNodesChange: (changes: NodeChange<WorkflowNode>[]) => void;
@@ -101,6 +116,13 @@ interface WorkflowState {
     setExecutionStatus: (status: ExecutionContext['status']) => void;
     addExecutionStep: (step: ExecutionContext['history'][0]) => void;
     resetExecution: () => void;
+
+    // App mode
+    setAppMode: (mode: AppMode) => void;
+
+    // Chat
+    addChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
+    clearChatMessages: () => void;
 }
 
 const initialExecution: ExecutionContext = {
@@ -127,6 +149,8 @@ export const useWorkflowStore = create<WorkflowState>()(
             selectedNodeId: null,
             execution: initialExecution,
             settings: initialSettings,
+            appMode: 'edit' as AppMode,
+            chatMessages: [],
 
             onNodesChange: (changes) => {
                 set({
@@ -263,6 +287,23 @@ export const useWorkflowStore = create<WorkflowState>()(
 
             resetExecution: () => {
                 set({ execution: initialExecution });
+            },
+
+            setAppMode: (mode) => {
+                set({ appMode: mode });
+            },
+
+            addChatMessage: (message) => {
+                const newMessage: ChatMessage = {
+                    ...message,
+                    id: `msg-${Date.now()}`,
+                    timestamp: Date.now(),
+                };
+                set({ chatMessages: [...get().chatMessages, newMessage] });
+            },
+
+            clearChatMessages: () => {
+                set({ chatMessages: [] });
             },
         }),
         {

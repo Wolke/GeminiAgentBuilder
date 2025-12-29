@@ -4,10 +4,10 @@ import type { AgentNodeData } from '../../types';
 import './nodes.css';
 
 export function AgentNode({ data, selected }: NodeProps) {
-    const nodeData = data as AgentNodeData;
+    const nodeData = data as AgentNodeData & { isExecuting?: boolean };
 
     return (
-        <div className={`custom-node agent-node ${selected ? 'selected' : ''}`}>
+        <div className={`custom-node agent-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
             <Handle type="target" position={Position.Left} className="handle target-handle" />
             <div className="node-header">
                 <span className="node-icon">🤖</span>

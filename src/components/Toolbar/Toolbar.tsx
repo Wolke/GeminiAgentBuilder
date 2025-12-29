@@ -19,6 +19,8 @@ const nodeItems: NodeItem[] = [
     { type: 'output', label: 'Output', icon: '⬛', color: '#9b59b6' },
 ];
 
+import { WorkflowEngine } from '../../services';
+
 export function Toolbar() {
     const {
         addNode,
@@ -27,14 +29,17 @@ export function Toolbar() {
         workflowName,
         settings,
         updateSettings,
+        execution,
+        resetExecution,
     } = useWorkflowStore();
 
     const handleAddNode = (type: NodeType) => {
-        // Add node at a random position in the viewport
         const x = 100 + Math.random() * 300;
         const y = 100 + Math.random() * 200;
         addNode(type, { x, y });
     };
+
+    const isRunning = execution.status === 'running';
 
     return (
         <div className="toolbar">
@@ -67,12 +72,24 @@ export function Toolbar() {
                         placeholder="Workflow name..."
                     />
                 </div>
-                <div className="toolbar-actions">
+                <div className="toolbar-actions" style={{ flexWrap: 'wrap' }}>
+                    <button
+                        className={`action-button run ${isRunning ? 'running' : ''}`}
+                        onClick={() => WorkflowEngine.run()}
+                        disabled={isRunning}
+                    >
+                        {isRunning ? '⏳ ...' : '▶ Run'}
+                    </button>
+                    {execution.history.length > 0 && (
+                        <button className="action-button reset" onClick={resetExecution}>
+                            🧹
+                        </button>
+                    )}
                     <button className="action-button save" onClick={saveWorkflow}>
-                        💾 Save
+                        💾
                     </button>
                     <button className="action-button new" onClick={newWorkflow}>
-                        ✨ New
+                        ✨
                     </button>
                 </div>
             </div>
@@ -81,13 +98,31 @@ export function Toolbar() {
                 <h3 className="toolbar-title">Settings</h3>
                 <div className="settings-group">
                     <label className="settings-label">Gemini API Key</label>
-                    <input
-                        type="password"
-                        className="settings-input"
-                        value={settings.geminiApiKey}
-                        onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
-                        placeholder="Enter your API key..."
-                    />
+                    <div className="api-key-row">
+                        <input
+                            type="password"
+                            className="settings-input"
+                            value={settings.geminiApiKey}
+                            onChange={(e) => updateSettings({ geminiApiKey: e.target.value })}
+                            placeholder="Enter your API key..."
+                        />
+                        <button
+                            className="save-key-btn"
+                            onClick={() => {
+                                // Force save to localStorage
+                                localStorage.setItem('gemini-agent-builder-storage', JSON.stringify({
+                                    state: {
+                                        savedWorkflows: useWorkflowStore.getState().savedWorkflows,
+                                        settings: useWorkflowStore.getState().settings,
+                                    }
+                                }));
+                                alert('API Key saved!');
+                            }}
+                            title="Save API Key"
+                        >
+                            💾
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

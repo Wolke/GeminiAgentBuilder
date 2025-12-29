@@ -29,8 +29,20 @@ export function NodeCanvas() {
         onNodesChange,
         onEdgesChange,
         onConnect,
-        selectNode
+        selectNode,
+        execution,
+        appMode
     } = useWorkflowStore();
+
+    const isRunMode = appMode === 'run';
+
+    const styledNodes = nodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            isExecuting: execution.currentNodeId === node.id
+        }
+    }));
 
     const onNodeClick = useCallback((_: React.MouseEvent, node: { id: string }) => {
         selectNode(node.id);
@@ -43,14 +55,17 @@ export function NodeCanvas() {
     return (
         <div className="canvas-container">
             <ReactFlow
-                nodes={nodes}
+                nodes={styledNodes}
                 edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
+                onNodesChange={isRunMode ? undefined : onNodesChange}
+                onEdgesChange={isRunMode ? undefined : onEdgesChange}
+                onConnect={isRunMode ? undefined : onConnect}
                 onNodeClick={onNodeClick}
                 onPaneClick={onPaneClick}
                 nodeTypes={nodeTypes}
+                nodesDraggable={!isRunMode}
+                nodesConnectable={!isRunMode}
+                elementsSelectable={!isRunMode}
                 fitView
                 proOptions={{ hideAttribution: true }}
                 defaultEdgeOptions={{

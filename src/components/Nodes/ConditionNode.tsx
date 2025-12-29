@@ -12,10 +12,10 @@ const conditionLabels: Record<ConditionNodeData['conditionType'], string> = {
 };
 
 export function ConditionNode({ data, selected }: NodeProps) {
-    const nodeData = data as ConditionNodeData;
+    const nodeData = data as ConditionNodeData & { isExecuting?: boolean };
 
     return (
-        <div className={`custom-node condition-node ${selected ? 'selected' : ''}`}>
+        <div className={`custom-node condition-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
             <Handle type="target" position={Position.Left} className="handle target-handle" />
             <div className="node-header">
                 <span className="node-icon">◇</span>

@@ -4,10 +4,10 @@ import type { StartNodeData } from '../../types';
 import './nodes.css';
 
 export function StartNode({ data, selected }: NodeProps) {
-    const nodeData = data as StartNodeData;
+    const nodeData = data as StartNodeData & { isExecuting?: boolean };
 
     return (
-        <div className={`custom-node start-node ${selected ? 'selected' : ''}`}>
+        <div className={`custom-node start-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
             <div className="node-header">
                 <span className="node-icon">▶</span>
                 <span className="node-title">{nodeData.label}</span>

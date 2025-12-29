@@ -18,10 +18,10 @@ const toolLabels: Record<ToolType, string> = {
 };
 
 export function ToolNode({ data, selected }: NodeProps) {
-    const nodeData = data as ToolNodeData;
+    const nodeData = data as ToolNodeData & { isExecuting?: boolean };
 
     return (
-        <div className={`custom-node tool-node ${selected ? 'selected' : ''}`}>
+        <div className={`custom-node tool-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
             <Handle type="target" position={Position.Left} className="handle target-handle" />
             <div className="node-header">
                 <span className="node-icon">{toolIcons[nodeData.toolType] || '🔧'}</span>

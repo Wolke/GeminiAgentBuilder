@@ -27,9 +27,11 @@ const TOOL_TYPE_OPTIONS: { value: ToolType; label: string }[] = [
 ];
 
 export function PropertiesPanel() {
-    const { nodes, selectedNodeId, updateNodeData, deleteNode } = useWorkflowStore();
+    const { nodes, selectedNodeId, updateNodeData, deleteNode, execution } = useWorkflowStore();
 
     const selectedNode = nodes.find(n => n.id === selectedNodeId);
+
+    const nodeHistory = execution.history.filter(h => h.nodeId === selectedNodeId);
 
     if (!selectedNode) {
         return (
@@ -310,6 +312,29 @@ export function PropertiesPanel() {
                 {selectedNode.type === 'tool' && renderToolNodeProps(selectedNode.data as ToolNodeData)}
                 {selectedNode.type === 'condition' && renderConditionNodeProps(selectedNode.data as ConditionNodeData)}
                 {selectedNode.type === 'output' && renderOutputNodeProps(selectedNode.data as OutputNodeData)}
+
+                {nodeHistory.length > 0 && (
+                    <div className="prop-group history-section">
+                        <label className="history-label">Execution Results</label>
+                        <div className="history-list">
+                            {nodeHistory.map((h, i) => (
+                                <div key={i} className="history-item">
+                                    <div className="history-header">
+                                        <span className="history-time">{new Date(h.startTime).toLocaleTimeString()}</span>
+                                        {h.endTime && <span className="history-duration">{h.endTime - h.startTime}ms</span>}
+                                    </div>
+                                    <pre className="history-data">
+                                        {typeof h.output === 'string'
+                                            ? h.output
+                                            : typeof h.output === 'object' && h.output !== null && 'text' in h.output
+                                                ? (h.output as any).text
+                                                : JSON.stringify(h.output, null, 2)}
+                                    </pre>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
