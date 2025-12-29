@@ -1,0 +1,163 @@
+/* Toolbar Styles */
+
+.toolbar {
+    width: 260px;
+    background: linear-gradient(180deg, #1a1a28 0%, #141420 100%);
+    border-right: 1px solid #2d2d40;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+}
+
+.toolbar-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.toolbar-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #808090;
+    margin: 0;
+}
+
+/* Node Palette */
+.node-palette {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.node-button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2d2d40;
+    border-radius: 8px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.node-button:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--node-color);
+    transform: translateX(4px);
+}
+
+.node-button-icon {
+    font-size: 16px;
+    width: 24px;
+    text-align: center;
+}
+
+.node-button-label {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* Workflow Info */
+.workflow-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.workflow-name-input {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2d2d40;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 13px;
+    transition: all 0.15s ease;
+}
+
+.workflow-name-input:focus {
+    outline: none;
+    border-color: #5865f2;
+    background: rgba(88, 101, 242, 0.05);
+}
+
+.workflow-name-input::placeholder {
+    color: #606070;
+}
+
+/* Toolbar Actions */
+.toolbar-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-button {
+    flex: 1;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.action-button.save {
+    background: linear-gradient(135deg, #5865f2 0%, #4752c4 100%);
+    color: white;
+}
+
+.action-button.save:hover {
+    background: linear-gradient(135deg, #6875f5 0%, #5865f2 100%);
+    transform: translateY(-1px);
+}
+
+.action-button.new {
+    background: rgba(255, 255, 255, 0.05);
+    color: #a0a0b0;
+    border: 1px solid #2d2d40;
+}
+
+.action-button.new:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: #e0e0e0;
+}
+
+/* Settings */
+.settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.settings-label {
+    font-size: 11px;
+    color: #808090;
+}
+
+.settings-input {
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #2d2d40;
+    border-radius: 6px;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: 'Fira Code', monospace;
+    transition: all 0.15s ease;
+}
+
+.settings-input:focus {
+    outline: none;
+    border-color: #5865f2;
+    background: rgba(88, 101, 242, 0.05);
+}
+
+.settings-input::placeholder {
+    color: #606070;
+    font-family: inherit;
+}
