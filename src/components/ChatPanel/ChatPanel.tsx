@@ -19,16 +19,27 @@ export function ChatPanel() {
         setInput('');
 
         // Run workflow with user input
-        const result = await WorkflowEngine.run(input.trim());
+        try {
+            const result = await WorkflowEngine.run(input.trim());
 
-        // Add assistant response
-        if (result) {
-            const responseText = typeof result === 'string'
-                ? result
-                : typeof result === 'object' && 'text' in result
-                    ? result.text
-                    : JSON.stringify(result, null, 2);
-            addChatMessage({ role: 'assistant', content: responseText });
+            // Add assistant response
+            if (result) {
+                // Check if it's an error response
+                if (typeof result === 'object' && result.error === true) {
+                    addChatMessage({ role: 'assistant', content: result.message || '❌ 執行失敗' });
+                } else {
+                    const responseText = typeof result === 'string'
+                        ? result
+                        : typeof result === 'object' && 'text' in result
+                            ? result.text
+                            : JSON.stringify(result, null, 2);
+                    addChatMessage({ role: 'assistant', content: responseText });
+                }
+            } else {
+                addChatMessage({ role: 'assistant', content: '❌ Workflow 沒有回傳結果' });
+            }
+        } catch (error: any) {
+            addChatMessage({ role: 'assistant', content: `❌ 發生未預期的錯誤: ${error?.message || '未知錯誤'}` });
         }
     };
 

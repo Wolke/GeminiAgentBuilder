@@ -66,11 +66,14 @@ export function NodeCanvas() {
                 nodesDraggable={!isRunMode}
                 nodesConnectable={!isRunMode}
                 elementsSelectable={!isRunMode}
+                edgesReconnectable={!isRunMode}
+                deleteKeyCode={isRunMode ? null : ['Backspace', 'Delete']}
                 fitView
                 proOptions={{ hideAttribution: true }}
                 defaultEdgeOptions={{
                     style: { stroke: '#5865f2', strokeWidth: 2 },
                     animated: true,
+                    selectable: true,
                 }}
             >
                 <Background

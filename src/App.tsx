@@ -46,7 +46,7 @@ function App() {
           </div>
         </header>
         <main className="app-main">
-          <Toolbar />
+          {appMode === 'edit' && <Toolbar />}
           <NodeCanvas />
           {appMode === 'edit' ? <PropertiesPanel /> : <ChatPanel />}
         </main>

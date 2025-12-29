@@ -100,7 +100,20 @@ export class WorkflowEngine {
         } catch (error: any) {
             console.error('Workflow execution failed:', error);
             store.setExecutionStatus('error');
-            return null;
+
+            // Extract meaningful error message
+            let errorMessage = 'Workflow execution failed.';
+            if (error?.message) {
+                if (error.message.includes('429') || error.message.includes('quota')) {
+                    errorMessage = '⏳ API 配額已達上限，請稍後再試（約 1 分鐘）或更換 API Key。';
+                } else if (error.message.includes('401') || error.message.includes('API key')) {
+                    errorMessage = '🔑 API Key 無效，請檢查設定。';
+                } else {
+                    errorMessage = `❌ ${error.message.slice(0, 200)}`;
+                }
+            }
+
+            return { error: true, message: errorMessage };
         } finally {
             this.isRunning = false;
         }
@@ -197,7 +210,27 @@ export class WorkflowEngine {
 
         // Default: find any outgoing edge
         const edge = edges.find(e => e.source === current.id);
-        if (!edge) return undefined;
-        return nodes.find(n => n.id === edge.target);
+        if (edge) {
+            return nodes.find(n => n.id === edge.target);
+        }
+
+        // Fallback: If no edges, try to find next node in a logical sequence
+        // Order: start -> agent -> tool -> condition -> output
+        const nodeOrder = ['start', 'agent', 'tool', 'condition', 'output'];
+        const currentIndex = nodeOrder.indexOf(current.type as string);
+
+        if (currentIndex >= 0 && currentIndex < nodeOrder.length - 1) {
+            // Find next node type in sequence that exists
+            for (let i = currentIndex + 1; i < nodeOrder.length; i++) {
+                const nextType = nodeOrder[i];
+                const nextNode = nodes.find(n => n.type === nextType);
+                if (nextNode) {
+                    console.log(`[Fallback] No edge from ${current.type}, using ${nextType} node`);
+                    return nextNode;
+                }
+            }
+        }
+
+        return undefined;
     }
 }
