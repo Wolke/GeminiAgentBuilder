@@ -3,7 +3,7 @@
 import type { Node, Edge } from '@xyflow/react';
 
 // All available node types
-export type NodeType = 'start' | 'agent' | 'tool' | 'condition' | 'output';
+export type NodeType = 'start' | 'agent' | 'tool' | 'condition' | 'output' | 'memory';
 
 // Base node data structure
 export interface BaseNodeData {
@@ -119,9 +119,14 @@ export interface ClassifyExample {
   category: string;
 }
 
-// Output Node - workflow endpoint
 export interface OutputNodeData extends BaseNodeData {
   outputFormat: 'text' | 'json' | 'markdown';
+}
+
+// Memory Node - conversation history storage
+export interface MemoryNodeData extends BaseNodeData {
+  storageKey: string;    // localStorage key
+  maxMessages: number;   // Limit stored messages (default 10)
 }
 
 // Union type for all node data
@@ -130,7 +135,8 @@ export type WorkflowNodeData =
   | AgentNodeData
   | ToolNodeData
   | ConditionNodeData
-  | OutputNodeData;
+  | OutputNodeData
+  | MemoryNodeData;
 
 // Workflow node with type discrimination
 export type WorkflowNode = Node<WorkflowNodeData, NodeType>;

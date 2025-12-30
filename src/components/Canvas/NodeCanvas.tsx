@@ -12,7 +12,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useWorkflowStore } from '../../stores';
-import { StartNode, AgentNode, ToolNode, ConditionNode, OutputNode } from '../Nodes';
+import { StartNode, AgentNode, ToolNode, ConditionNode, OutputNode, MemoryNode } from '../Nodes';
 import { CustomEdge } from './CustomEdge';
 import './NodeCanvas.css';
 
@@ -22,6 +22,7 @@ const nodeTypes: NodeTypes = {
     tool: ToolNode,
     condition: ConditionNode,
     output: OutputNode,
+    memory: MemoryNode,
 };
 
 const edgeTypes: EdgeTypes = {
@@ -83,6 +84,13 @@ export function NodeCanvas() {
                     if (connection.sourceHandle === 'tool-output') {
                         return connection.targetHandle === 'tools';
                     }
+                    // Restrict connections to the "Memory" handle
+                    if (connection.targetHandle === 'memory') {
+                        return connection.sourceHandle === 'memory-output';
+                    }
+                    if (connection.sourceHandle === 'memory-output') {
+                        return connection.targetHandle === 'memory';
+                    }
                     return true;
                 }}
                 fitView
@@ -106,8 +114,9 @@ export function NodeCanvas() {
                             case 'start': return '#43b581';
                             case 'agent': return '#5865f2';
                             case 'tool': return '#faa61a';
+                            case 'memory': return '#9b59b6';
                             case 'condition': return '#f04747';
-                            case 'output': return '#9b59b6';
+                            case 'output': return '#808090';
                             default: return '#808090';
                         }
                     }}

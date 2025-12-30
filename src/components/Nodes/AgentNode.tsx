@@ -30,15 +30,18 @@ export function AgentNode({ data, selected }: NodeProps) {
                 <div className="node-model">{nodeData.model}</div>
                 <div className="node-prompt" title={nodeData.systemPrompt}>
                     {nodeData.systemPrompt?.slice(0, 50)}
-                    {nodeData.systemPrompt?.length > 50 ? '...' : ''}
+                    {(nodeData.systemPrompt?.length ?? 0) > 50 ? '...' : ''}
                 </div>
-                {nodeData.enabledTools?.length > 0 && (
-                    <div className="node-tools">
-                        🔧 {nodeData.enabledTools.length} tool(s)
-                    </div>
-                )}
             </div>
-            <Handle type="source" position={Position.Right} className="handle source-handle" />
+            <Handle type="source" position={Position.Right} id="main-output" className="handle source-handle" />
+            <Handle
+                type="target"
+                position={Position.Bottom}
+                id="memory"
+                className="handle memory-handle-target"
+                style={{ left: '50%', background: '#9b59b6', borderColor: '#9b59b6' }}
+            />
+            <div className="memory-handle-label" style={{ position: 'absolute', bottom: '-20px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: '#9b59b6', fontWeight: 'bold' }}>Memory</div>
         </div>
     );
 }

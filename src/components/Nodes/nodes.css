@@ -289,3 +289,53 @@
 .tool-handle-source:hover {
   transform: scale(1.2);
 }
+
+/* Memory Node */
+.memory-node {
+  border-color: #9b59b6;
+}
+
+.memory-node .node-header {
+  background: linear-gradient(90deg, rgba(155, 89, 182, 0.15) 0%, transparent 100%);
+}
+
+.memory-node .handle {
+  border-color: #9b59b6 !important;
+}
+
+.memory-node .handle:hover {
+  background: #9b59b6 !important;
+}
+
+.memory-key {
+  font-size: 10px;
+  color: #9b59b6;
+  font-weight: 500;
+}
+
+.memory-limit {
+  font-size: 9px;
+  color: #808090;
+}
+
+.memory-handle-source {
+  width: 12px !important;
+  height: 12px !important;
+  top: -6px !important;
+  border-width: 2px !important;
+}
+
+.memory-handle-source:hover {
+  transform: scale(1.2);
+}
+
+.memory-handle-target {
+  width: 12px !important;
+  height: 12px !important;
+  bottom: -6px !important;
+  border-width: 2px !important;
+}
+
+.memory-handle-target:hover {
+  transform: scale(1.2);
+}

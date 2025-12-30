@@ -15,8 +15,9 @@ const nodeItems: NodeItem[] = [
     { type: 'start', label: 'Start', icon: '▶', color: '#43b581' },
     { type: 'agent', label: 'Agent', icon: '🤖', color: '#5865f2' },
     { type: 'tool', label: 'Tool', icon: '🔧', color: '#faa61a' },
-    { type: 'condition', label: 'Condition', icon: '◇', color: '#f04747' },
-    { type: 'output', label: 'Output', icon: '⬛', color: '#9b59b6' },
+    { type: 'memory', label: 'Memory', icon: '🧠', color: '#9b59b6' },
+    { type: 'condition', label: 'Classify', icon: '◇', color: '#f04747' },
+    { type: 'output', label: 'Output', icon: '⬛', color: '#808090' },
 ];
 
 import { WorkflowEngine } from '../../services';

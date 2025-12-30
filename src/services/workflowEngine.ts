@@ -9,7 +9,8 @@ import type {
     AgentNodeData,
     ConditionNodeData,
     ToolNodeData,
-    OutputNodeData
+    OutputNodeData,
+    MemoryNodeData
 } from '../types';
 
 export class WorkflowEngine {
@@ -136,7 +137,7 @@ export class WorkflowEngine {
             case 'agent': {
                 const agentData = data as AgentNodeData;
                 // Use last_output as the prompt if available, otherwise use a default
-                const prompt = (variables['last_output'] as string) || "Hello, how can you help me today?";
+                const userMessage = (variables['last_output'] as string) || "Hello, how can you help me today?";
 
                 // Resolve connected tools
                 // We use allNodes to look up the node data for connected edges
@@ -167,7 +168,53 @@ export class WorkflowEngine {
                     if (agentData.enabledTools.includes('google_maps')) toolsConfig.googleMaps = true;
                 }
 
+                // Resolve connected memory node
+                const memoryEdges = edges.filter(e => e.target === node.id && e.targetHandle === 'memory');
+                const connectedMemoryNode = memoryEdges.map(e => allNodes.find(n => n.id === e.source)).find(n => n?.type === 'memory');
+
+                let conversationHistory: { role: string; content: string }[] = [];
+                let storageKey = 'chat_history';
+                let maxMessages = 10;
+
+                if (connectedMemoryNode) {
+                    const memData = connectedMemoryNode.data as MemoryNodeData;
+                    storageKey = memData.storageKey || 'chat_history';
+                    maxMessages = memData.maxMessages || 10;
+
+                    try {
+                        const stored = localStorage.getItem(storageKey);
+                        if (stored) {
+                            conversationHistory = JSON.parse(stored);
+                        }
+                    } catch (e) {
+                        console.warn('[WorkflowEngine] Failed to parse memory:', e);
+                    }
+                }
+
+                // Build prompt with conversation history
+                let prompt = userMessage;
+                if (conversationHistory.length > 0) {
+                    const historyText = conversationHistory
+                        .slice(-maxMessages)
+                        .map(m => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+                        .join('\n\n');
+                    prompt = `Previous conversation:\n${historyText}\n\nUser: ${userMessage}`;
+                }
+
                 const result = await generateContent(prompt, agentData.systemPrompt, toolsConfig);
+
+                // Save to memory if connected
+                if (connectedMemoryNode) {
+                    conversationHistory.push({ role: 'user', content: userMessage });
+                    conversationHistory.push({ role: 'assistant', content: result.text || '' });
+                    // Keep only last N messages
+                    const trimmed = conversationHistory.slice(-(maxMessages * 2));
+                    try {
+                        localStorage.setItem(storageKey, JSON.stringify(trimmed));
+                    } catch (e) {
+                        console.warn('[WorkflowEngine] Failed to save memory:', e);
+                    }
+                }
 
                 return result;
             }

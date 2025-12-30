@@ -13,7 +13,8 @@ import {
     AgentNodeData,
     ToolNodeData,
     ConditionNodeData,
-    OutputNodeData
+    OutputNodeData,
+    MemoryNodeData
 } from '../types';
 import {
     addEdge,
@@ -58,6 +59,12 @@ const createDefaultNodeData = (type: NodeType): WorkflowNode['data'] => {
                 label: 'Output',
                 outputFormat: 'text',
             } as OutputNodeData;
+        case 'memory':
+            return {
+                label: 'Memory',
+                storageKey: 'chat_history',
+                maxMessages: 10,
+            } as MemoryNodeData;
     }
 };
 

@@ -7,6 +7,7 @@ import type {
     ToolNodeData,
     ConditionNodeData,
     OutputNodeData,
+    MemoryNodeData,
     ToolType,
     GeminiModel
 } from '../../types';
@@ -389,6 +390,52 @@ export function PropertiesPanel() {
         </>
     );
 
+    const renderMemoryNodeProps = (data: MemoryNodeData) => (
+        <>
+            <div className="prop-group">
+                <label>Label</label>
+                <input
+                    type="text"
+                    value={data.label}
+                    onChange={(e) => handleUpdate({ label: e.target.value })}
+                />
+            </div>
+            <div className="prop-group">
+                <label>Storage Key</label>
+                <input
+                    type="text"
+                    value={data.storageKey || 'chat_history'}
+                    onChange={(e) => handleUpdate({ storageKey: e.target.value })}
+                    placeholder="chat_history"
+                />
+                <small style={{ color: '#888' }}>localStorage key for conversation history</small>
+            </div>
+            <div className="prop-group">
+                <label>Max Messages: {data.maxMessages || 10}</label>
+                <input
+                    type="range"
+                    min="1"
+                    max="50"
+                    step="1"
+                    value={data.maxMessages || 10}
+                    onChange={(e) => handleUpdate({ maxMessages: parseInt(e.target.value) })}
+                />
+            </div>
+            <div className="prop-group">
+                <button
+                    className="action-button"
+                    style={{ background: '#f04747', marginTop: '8px' }}
+                    onClick={() => {
+                        localStorage.removeItem(data.storageKey || 'chat_history');
+                        alert('Memory cleared!');
+                    }}
+                >
+                    🗑 Clear Memory
+                </button>
+            </div>
+        </>
+    );
+
     return (
         <div className="properties-panel">
             <div className="panel-header">
@@ -407,6 +454,7 @@ export function PropertiesPanel() {
                 {selectedNode.type === 'tool' && renderToolNodeProps(selectedNode.data as ToolNodeData)}
                 {selectedNode.type === 'condition' && renderConditionNodeProps(selectedNode.data as ConditionNodeData)}
                 {selectedNode.type === 'output' && renderOutputNodeProps(selectedNode.data as OutputNodeData)}
+                {selectedNode.type === 'memory' && renderMemoryNodeProps(selectedNode.data as MemoryNodeData)}
 
                 {nodeHistory.length > 0 && (
                     <div className="prop-group history-section">
