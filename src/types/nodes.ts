@@ -32,17 +32,21 @@ export interface AgentNodeData extends BaseNodeData {
 }
 
 export type GeminiModel =
-  | 'gemini-2.0-flash-exp'
-  | 'gemini-1.5-pro'
-  | 'gemini-1.5-flash'
-  | 'gemini-1.5-flash-8b';
+  | 'gemini-3.0-pro-preview'
+  | 'gemini-3.0-flash'
+  | 'gemini-2.5-pro'
+  | 'gemini-2.5-flash'
+  | 'gemini-2.5-flash-lite'
+  | 'gemini-2.0-flash';
 
 // Runtime constants for models
 export const GEMINI_MODELS: GeminiModel[] = [
-  'gemini-2.0-flash-exp',
-  'gemini-1.5-pro',
-  'gemini-1.5-flash',
-  'gemini-1.5-flash-8b',
+  'gemini-3.0-pro-preview',
+  'gemini-3.0-flash',
+  'gemini-2.5-pro',
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-2.0-flash',
 ];
 
 // Tool Node - external tool execution
@@ -86,10 +90,20 @@ export interface FunctionParameter {
 }
 
 // Condition Node - branching logic
+// Condition Node - Classify logic (renamed conceptually to Classify but keeping type for now)
 export interface ConditionNodeData extends BaseNodeData {
-  conditionType: 'contains' | 'equals' | 'greater_than' | 'less_than' | 'custom';
-  conditionValue: string;
-  customExpression?: string;
+  // Classification specific
+  categories: string[];
+  inputVariable?: string; // defaults to 'last_output'
+  instructions?: string;
+  examples: ClassifyExample[];
+  model: GeminiModel;
+}
+
+export interface ClassifyExample {
+  id: string;
+  text: string;
+  category: string;
 }
 
 // Output Node - workflow endpoint

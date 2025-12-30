@@ -3,13 +3,7 @@ import type { NodeProps } from '@xyflow/react';
 import type { ConditionNodeData } from '../../types';
 import './nodes.css';
 
-const conditionLabels: Record<ConditionNodeData['conditionType'], string> = {
-    contains: 'Contains',
-    equals: 'Equals',
-    greater_than: '>',
-    less_than: '<',
-    custom: 'Custom',
-};
+
 
 export function ConditionNode({ data, selected }: NodeProps) {
     const nodeData = data as ConditionNodeData & { isExecuting?: boolean };
@@ -22,29 +16,20 @@ export function ConditionNode({ data, selected }: NodeProps) {
                 <span className="node-title">{nodeData.label}</span>
             </div>
             <div className="node-content">
-                <div className="condition-expression">
-                    {conditionLabels[nodeData.conditionType]} "{nodeData.conditionValue}"
+                <div className="condition-categories">
+                    {nodeData.categories?.map((category, index) => (
+                        <div key={index} className="category-item" style={{ position: 'relative', height: '24px', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingRight: '10px' }}>
+                            <span className="category-label">{category}</span>
+                            <Handle
+                                type="source"
+                                position={Position.Right}
+                                id={category}
+                                className="handle source-handle category-handle"
+                                style={{ top: '50%', right: '-8px' }}
+                            />
+                        </div>
+                    ))}
                 </div>
-            </div>
-            <div className="condition-handles">
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    id="true"
-                    className="handle source-handle true-handle"
-                    style={{ top: '35%' }}
-                />
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    id="false"
-                    className="handle source-handle false-handle"
-                    style={{ top: '65%' }}
-                />
-            </div>
-            <div className="condition-labels">
-                <span className="true-label">✓</span>
-                <span className="false-label">✗</span>
             </div>
         </div>
     );

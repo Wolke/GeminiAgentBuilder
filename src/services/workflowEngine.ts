@@ -143,35 +143,41 @@ export class WorkflowEngine {
 
             case 'condition': {
                 const condData = data as ConditionNodeData;
-                const input = String(variables['last_output'] || "");
+                const input = String(variables[condData.inputVariable || 'last_output'] || "");
 
-                let matches = false;
-                switch (condData.conditionType) {
-                    case 'contains':
-                        matches = input.toLowerCase().includes(condData.conditionValue.toLowerCase());
-                        break;
-                    case 'equals':
-                        matches = input === condData.conditionValue;
-                        break;
-                    case 'greater_than':
-                        matches = Number(input) > Number(condData.conditionValue);
-                        break;
-                    case 'less_than':
-                        matches = Number(input) < Number(condData.conditionValue);
-                        break;
-                    case 'custom':
-                        // Basic eval risk noted, but helpful for prototype
-                        try {
-                            const evalFn = new Function('input', `return ${condData.customExpression}`);
-                            matches = !!evalFn(input);
-                        } catch (e) {
-                            console.error('Custom condition eval failed', e);
-                            matches = false;
-                        }
-                        break;
+                // Construct prompt for classification
+                let prompt = `You are a text classifier. Classify the following input into one of these categories: ${condData.categories?.join(', ')}.\n`;
+                prompt += `Return ONLY the exact category name. Do not explain. If it doesn't fit any, return "Unclassified".\n\n`;
+
+                if (condData.examples && condData.examples.length > 0) {
+                    prompt += "Examples:\n";
+                    condData.examples.forEach(ex => {
+                        prompt += `Input: "${ex.text}"\nCategory: ${ex.category}\n`;
+                    });
+                    prompt += "\n";
                 }
 
-                return matches;
+                prompt += `Input: "${input}"\nCategory:`;
+
+                try {
+                    const result = await generateContent(
+                        prompt,
+                        undefined,
+                        undefined,
+                        condData.model || 'gemini-2.5-flash'
+                    );
+
+                    const classifiedCategory = result.text?.trim() || "Unclassified";
+
+                    // Verify if the result matches one of our categories (case insensitive check, but return exact match)
+                    const matchedCategory = condData.categories?.find(c => c.toLowerCase() === classifiedCategory.toLowerCase());
+
+                    return matchedCategory || "Unclassified";
+
+                } catch (e) {
+                    console.error('Classification failed', e);
+                    return "Error";
+                }
             }
 
             case 'tool': {
@@ -200,11 +206,14 @@ export class WorkflowEngine {
         nodes: WorkflowNode[],
         result: any
     ): WorkflowNode | undefined {
-        // Special handling for condition nodes branching
+        // Special handling for condition (Classify) nodes branching
         if (current.type === 'condition') {
-            const handleId = result === true ? 'true' : 'false';
+            const handleId = result; // The result IS the category name which matches the sourceHandle id
             const edge = edges.find(e => e.source === current.id && e.sourceHandle === handleId);
-            if (!edge) return undefined;
+            if (!edge) {
+                console.log(`[Flow] No edge for category: ${handleId}`);
+                return undefined;
+            }
             return nodes.find(n => n.id === edge.target);
         }
 

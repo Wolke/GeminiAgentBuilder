@@ -13,10 +13,12 @@ import type {
 import './PropertiesPanel.css';
 
 const GEMINI_MODELS_OPTIONS: { value: GeminiModel; label: string }[] = [
-    { value: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash (Exp)' },
-    { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-    { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-    { value: 'gemini-1.5-flash-8b', label: 'Gemini 1.5 Flash 8B' },
+    { value: 'gemini-3.0-pro-preview', label: 'Gemini 3.0 Pro (Preview)' },
+    { value: 'gemini-3.0-flash', label: 'Gemini 3.0 Flash' },
+    { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+    { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+    { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
+    { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
 ];
 
 const TOOL_TYPE_OPTIONS: { value: ToolType; label: string }[] = [
@@ -235,38 +237,106 @@ export function PropertiesPanel() {
                 />
             </div>
             <div className="prop-group">
-                <label>Condition Type</label>
+                <label>Model</label>
                 <select
-                    value={data.conditionType}
-                    onChange={(e) => handleUpdate({ conditionType: e.target.value as ConditionNodeData['conditionType'] })}
+                    value={data.model}
+                    onChange={(e) => handleUpdate({ model: e.target.value as GeminiModel })}
                 >
-                    <option value="contains">Contains</option>
-                    <option value="equals">Equals</option>
-                    <option value="greater_than">Greater Than</option>
-                    <option value="less_than">Less Than</option>
-                    <option value="custom">Custom Expression</option>
+                    {GEMINI_MODELS_OPTIONS.map(m => (
+                        <option key={m.value} value={m.value}>{m.label}</option>
+                    ))}
                 </select>
             </div>
             <div className="prop-group">
-                <label>Value</label>
+                <label>Input Variable</label>
                 <input
                     type="text"
-                    value={data.conditionValue}
-                    onChange={(e) => handleUpdate({ conditionValue: e.target.value })}
-                    placeholder="Enter value to compare..."
+                    value={data.inputVariable || 'last_output'}
+                    onChange={(e) => handleUpdate({ inputVariable: e.target.value })}
+                    placeholder="last_output"
                 />
             </div>
-            {data.conditionType === 'custom' && (
-                <div className="prop-group">
-                    <label>Custom Expression</label>
-                    <textarea
-                        value={data.customExpression || ''}
-                        onChange={(e) => handleUpdate({ customExpression: e.target.value })}
-                        rows={3}
-                        placeholder="e.g., input.length > 10"
-                    />
+
+            <div className="prop-group">
+                <label>Categories</label>
+                <div className="list-container">
+                    {data.categories?.map((cat, i) => (
+                        <div key={i} className="list-item">
+                            <input
+                                type="text"
+                                value={cat}
+                                onChange={(e) => {
+                                    const cats = [...(data.categories || [])];
+                                    cats[i] = e.target.value;
+                                    handleUpdate({ categories: cats });
+                                }}
+                            />
+                            <button
+                                className="remove-btn"
+                                onClick={() => handleUpdate({ categories: data.categories.filter((_, idx) => idx !== i) })}
+                            >
+                                ×
+                            </button>
+                        </div>
+                    ))}
+                    <button
+                        className="add-btn"
+                        onClick={() => handleUpdate({ categories: [...(data.categories || []), `Category ${data.categories?.length + 1}`] })}
+                    >
+                        + Add Category
+                    </button>
                 </div>
-            )}
+            </div>
+
+            <div className="prop-group">
+                <label>Examples (Few-Shot)</label>
+                <div className="examples-list">
+                    {data.examples?.map((ex, i) => (
+                        <div key={ex.id} className="example-item" style={{ border: '1px solid #444', padding: '8px', marginBottom: '8px', borderRadius: '4px' }}>
+                            <input
+                                type="text"
+                                placeholder="Input text..."
+                                value={ex.text}
+                                onChange={(e) => {
+                                    const exs = [...(data.examples || [])];
+                                    exs[i] = { ...ex, text: e.target.value };
+                                    handleUpdate({ examples: exs });
+                                }}
+                                style={{ marginBottom: '4px', width: '100%' }}
+                            />
+                            <select
+                                value={ex.category}
+                                onChange={(e) => {
+                                    const exs = [...(data.examples || [])];
+                                    exs[i] = { ...ex, category: e.target.value };
+                                    handleUpdate({ examples: exs });
+                                }}
+                                style={{ width: '100%' }}
+                            >
+                                <option value="" disabled>Select Category</option>
+                                {data.categories?.map(c => (
+                                    <option key={c} value={c}>{c}</option>
+                                ))}
+                            </select>
+                            <button
+                                className="remove-btn-small"
+                                onClick={() => handleUpdate({ examples: data.examples.filter((_, idx) => idx !== i) })}
+                                style={{ marginTop: '4px', fontSize: '0.8em', padding: '2px 6px' }}
+                            >
+                                Remove Example
+                            </button>
+                        </div>
+                    ))}
+                    <button
+                        className="add-btn"
+                        onClick={() => handleUpdate({
+                            examples: [...(data.examples || []), { id: Date.now().toString(), text: '', category: data.categories?.[0] || '' }]
+                        })}
+                    >
+                        + Add Example
+                    </button>
+                </div>
+            </div>
         </>
     );
 

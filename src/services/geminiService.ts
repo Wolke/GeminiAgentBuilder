@@ -6,7 +6,7 @@ import { GeminiConfig, FunctionDeclaration, GenerationResult } from '../types';
 let genAI: GoogleGenerativeAI | null = null;
 let model: GenerativeModel | null = null;
 
-export function initializeGemini(apiKey: string, modelName: string = 'gemini-2.0-flash-exp'): boolean {
+export function initializeGemini(apiKey: string, modelName: string = 'gemini-2.5-flash'): boolean {
     try {
         genAI = new GoogleGenerativeAI(apiKey);
         model = genAI.getGenerativeModel({ model: modelName });
@@ -28,9 +28,10 @@ export async function generateContent(
         functionDeclarations?: FunctionDeclaration[];
         codeExecution?: boolean;
         googleSearch?: boolean;
-    }
+    },
+    modelName?: string
 ): Promise<GenerationResult> {
-    if (!model) {
+    if (!model && !genAI) {
         throw new Error('Gemini not initialized. Call initializeGemini first.');
     }
 
@@ -59,13 +60,26 @@ export async function generateContent(
             } as Tool);
         }
 
-        // Create model with system instruction if provided
-        const generationModel = systemPrompt
-            ? genAI!.getGenerativeModel({
-                model: model.model,
+        // Determine which model to use
+        // If specific modelName provided, get that model
+        // Else if systemPrompt provided, get model with system instruction (using default model name)
+        // Else use default model
+
+        let generationModel: GenerativeModel;
+
+        if (modelName) {
+            generationModel = genAI!.getGenerativeModel({
+                model: modelName,
+                systemInstruction: systemPrompt
+            });
+        } else if (systemPrompt) {
+            generationModel = genAI!.getGenerativeModel({
+                model: model!.model,
                 systemInstruction: systemPrompt,
-            })
-            : model;
+            });
+        } else {
+            generationModel = model!;
+        }
 
         const result = await generationModel.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],

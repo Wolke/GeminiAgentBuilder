@@ -35,7 +35,7 @@ const createDefaultNodeData = (type: NodeType): WorkflowNode['data'] => {
         case 'agent':
             return {
                 label: 'Agent',
-                model: 'gemini-2.0-flash-exp',
+                model: 'gemini-2.5-flash',
                 systemPrompt: 'You are a helpful assistant.',
                 temperature: 0.7,
                 enabledTools: [],
@@ -48,9 +48,10 @@ const createDefaultNodeData = (type: NodeType): WorkflowNode['data'] => {
             } as ToolNodeData;
         case 'condition':
             return {
-                label: 'Condition',
-                conditionType: 'contains',
-                conditionValue: '',
+                label: 'Classify',
+                categories: ['Category 1', 'Category 2'],
+                examples: [],
+                model: 'gemini-2.5-flash',
             } as ConditionNodeData;
         case 'output':
             return {
@@ -134,7 +135,7 @@ const initialExecution: ExecutionContext = {
 
 const initialSettings: AppSettings = {
     geminiApiKey: '',
-    defaultModel: 'gemini-2.0-flash-exp',
+    defaultModel: 'gemini-2.5-flash',
     theme: 'dark',
 };
 
