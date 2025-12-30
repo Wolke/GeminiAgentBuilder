@@ -260,3 +260,32 @@
   color: #9b59b6;
   font-weight: 500;
 }
+
+/* Fix for default React Flow node background showing behind custom nodes */
+.react-flow__node {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+.tool-handle-target {
+  width: 12px !important;
+  height: 12px !important;
+  top: -6px !important;
+  border-width: 2px !important;
+}
+
+.tool-handle-target:hover {
+  transform: scale(1.2);
+}
+
+.tool-handle-source {
+  width: 12px !important;
+  height: 12px !important;
+  bottom: -6px !important;
+  border-width: 2px !important;
+}
+
+.tool-handle-source:hover {
+  transform: scale(1.2);
+}

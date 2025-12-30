@@ -28,6 +28,7 @@ export async function generateContent(
         functionDeclarations?: FunctionDeclaration[];
         codeExecution?: boolean;
         googleSearch?: boolean;
+        googleMaps?: boolean;
     },
     modelName?: string
 ): Promise<GenerationResult> {
@@ -60,6 +61,16 @@ export async function generateContent(
             } as Tool);
         }
 
+        if (tools?.googleMaps) {
+            // Google Maps grounding
+            console.log('[GeminiService] Google Maps tool enabled');
+            geminiTools.push({
+                googleMaps: {}
+            } as any); // Type assertion needed until SDK types update
+        }
+
+        console.log('[GeminiService] Constructing request with tools:', JSON.stringify(geminiTools, null, 2));
+
         // Determine which model to use
         // If specific modelName provided, get that model
         // Else if systemPrompt provided, get model with system instruction (using default model name)
@@ -81,12 +92,17 @@ export async function generateContent(
             generationModel = model!;
         }
 
+        console.log('[GeminiService] Using model:', generationModel.model);
+        console.log('[GeminiService] Prompt:', prompt);
+
         const result = await generationModel.generateContent({
             contents: [{ role: 'user', parts: [{ text: prompt }] }],
             tools: geminiTools.length > 0 ? geminiTools : undefined,
         });
 
         const response = result.response;
+        console.log('[GeminiService] Raw API Response:', JSON.stringify(response, null, 2));
+
         const candidate = response.candidates?.[0];
 
         if (!candidate) {
@@ -118,10 +134,13 @@ export async function generateContent(
         // Check for grounding metadata
         const groundingMeta = response.candidates?.[0]?.groundingMetadata;
         if (groundingMeta) {
+            console.log('[GeminiService] Grounding Metadata found:', groundingMeta);
             output.groundingMetadata = {
                 searchEntryPoint: groundingMeta.searchEntryPoint,
                 groundingChunks: groundingMeta.groundingChunks,
             };
+        } else {
+            console.log('[GeminiService] No Grounding Metadata found in response');
         }
 
         return output;
@@ -138,6 +157,7 @@ export function createChatSession(
         functionDeclarations?: FunctionDeclaration[];
         codeExecution?: boolean;
         googleSearch?: boolean;
+        googleMaps?: boolean;
     }
 ) {
     if (!genAI || !model) {
@@ -162,6 +182,10 @@ export function createChatSession(
 
     if (tools?.googleSearch) {
         geminiTools.push({ googleSearch: {} } as Tool);
+    }
+
+    if (tools?.googleMaps) {
+        geminiTools.push({ googleMaps: {} } as any);
     }
 
     const chatModel = systemPrompt

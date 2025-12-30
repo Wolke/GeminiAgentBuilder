@@ -60,7 +60,7 @@ export class WorkflowEngine {
                 const nodeType = currentNode.type as NodeType;
 
                 // 1. Execute current node logic
-                const result = await this.executeNode(currentNode, variables);
+                const result = await this.executeNode(currentNode, variables, edges, nodes);
 
                 // 2. Record execution step
                 const step: ExecutionStep = {
@@ -119,7 +119,12 @@ export class WorkflowEngine {
         }
     }
 
-    private static async executeNode(node: WorkflowNode, variables: Record<string, unknown>): Promise<any> {
+    private static async executeNode(
+        node: WorkflowNode,
+        variables: Record<string, unknown>,
+        edges: any[],
+        allNodes: WorkflowNode[]
+    ): Promise<any> {
         const data = node.data;
 
         switch (node.type) {
@@ -133,10 +138,36 @@ export class WorkflowEngine {
                 // Use last_output as the prompt if available, otherwise use a default
                 const prompt = (variables['last_output'] as string) || "Hello, how can you help me today?";
 
-                const result = await generateContent(prompt, agentData.systemPrompt, {
-                    codeExecution: agentData.enabledTools.includes('code_execution'),
-                    googleSearch: agentData.enabledTools.includes('google_search'),
+                // Resolve connected tools
+                // We use allNodes to look up the node data for connected edges
+                const toolEdges = edges.filter(e => e.target === node.id && e.targetHandle === 'tools');
+                const connectedTools = toolEdges.map(e => allNodes.find(n => n.id === e.source)).filter(n => n?.type === 'tool');
+
+                const toolsConfig = {
+                    codeExecution: false,
+                    googleSearch: false,
+                    googleMaps: false,
+                    functionDeclarations: [] as any[],
+                };
+
+                // Helper to merge tool config
+                connectedTools.forEach(toolNode => {
+                    const tData = toolNode?.data as ToolNodeData;
+                    if (!tData) return;
+
+                    if (tData.toolType === 'code_execution') toolsConfig.codeExecution = true;
+                    if (tData.toolType === 'google_search') toolsConfig.googleSearch = true;
+                    if (tData.toolType === 'google_maps') toolsConfig.googleMaps = true;
                 });
+
+                // Fallback to legacy checkbox property if no connections
+                if (connectedTools.length === 0 && agentData.enabledTools) {
+                    if (agentData.enabledTools.includes('code_execution')) toolsConfig.codeExecution = true;
+                    if (agentData.enabledTools.includes('google_search')) toolsConfig.googleSearch = true;
+                    if (agentData.enabledTools.includes('google_maps')) toolsConfig.googleMaps = true;
+                }
+
+                const result = await generateContent(prompt, agentData.systemPrompt, toolsConfig);
 
                 return result;
             }
@@ -182,8 +213,34 @@ export class WorkflowEngine {
 
             case 'tool': {
                 const toolData = data as ToolNodeData;
-                // Currently most tools are integrated directly into the Agent node in Gemini API
-                // For a separate Tool node, we could implement specific logic here
+
+                // For tools like Google Maps or Search, they are often executed AS PART of an Agent node.
+                // However, if this is a standalone Tool node meant to output to an Agent...
+                // Currently our flow is Agent -> (internal tools) -> Output.
+                // If we have standalone tool nodes, they might need to be passed to the NEXT agent as context.
+                // For now, we'll return the configuration so the *next* Agent node can potentially use it 
+                // (if we implement a "Use Previous Tool Output" logic).
+
+                // BUT, if this is merely defining a tool config that an Agent connects to:
+                // The current architecture seems to define tools IN the Agent Node properties (enabledTools).
+                // Standalone Tool Nodes might be for specific actions.
+
+                if (toolData.toolType === 'google_maps') {
+                    return {
+                        tool: 'google_maps',
+                        status: 'configured',
+                        description: 'Google Maps Grounding enabled'
+                    };
+                }
+
+                if (toolData.toolType === 'mcp') {
+                    return {
+                        tool: 'mcp',
+                        status: 'configured',
+                        server: toolData.config?.mcpServerUrl
+                    };
+                }
+
                 return { status: 'success', tool: toolData.toolType, message: `Executed ${toolData.label}` };
             }
 

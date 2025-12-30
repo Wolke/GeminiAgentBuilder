@@ -75,6 +75,16 @@ export function NodeCanvas() {
                 elementsSelectable={!isRunMode}
                 edgesReconnectable={!isRunMode}
                 deleteKeyCode={isRunMode ? null : ['Backspace', 'Delete']}
+                isValidConnection={(connection) => {
+                    // Restrict connections to the "Tools" handle
+                    if (connection.targetHandle === 'tools') {
+                        return connection.sourceHandle === 'tool-output';
+                    }
+                    if (connection.sourceHandle === 'tool-output') {
+                        return connection.targetHandle === 'tools';
+                    }
+                    return true;
+                }}
                 fitView
                 proOptions={{ hideAttribution: true }}
                 defaultEdgeOptions={{

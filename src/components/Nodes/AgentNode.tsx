@@ -8,7 +8,20 @@ export function AgentNode({ data, selected }: NodeProps) {
 
     return (
         <div className={`custom-node agent-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
-            <Handle type="target" position={Position.Left} className="handle target-handle" />
+            <Handle
+                type="target"
+                position={Position.Top}
+                id="tools"
+                className="handle tool-handle-target"
+                style={{ left: '50%', background: '#faa61a', borderColor: '#faa61a' }}
+            />
+            <div className="tool-handle-label" style={{ position: 'absolute', top: '-20px', left: '50%', transform: 'translateX(-50%)', fontSize: '10px', color: '#faa61a', fontWeight: 'bold' }}>Tools</div>
+            <Handle
+                type="target"
+                position={Position.Left}
+                id="main-input"
+                className="handle target-handle"
+            />
             <div className="node-header">
                 <span className="node-icon">🤖</span>
                 <span className="node-title">{nodeData.label}</span>

@@ -28,7 +28,8 @@ export interface AgentNodeData extends BaseNodeData {
   model: GeminiModel;
   systemPrompt: string;
   temperature: number;
-  enabledTools: ToolType[];
+  enabledTools?: ToolType[]; // Deprecated: Use Tool Node connections instead
+  deepResearch?: boolean; // Enable Deep Research capabilities
 }
 
 export type GeminiModel =
@@ -59,6 +60,9 @@ export type ToolType =
   | 'function_calling'
   | 'code_execution'
   | 'google_search'
+  | 'google_maps'
+  | 'file_search'
+  | 'mcp'
   | 'url_context';
 
 // Runtime constants for tool types
@@ -66,6 +70,9 @@ export const TOOL_TYPES: ToolType[] = [
   'function_calling',
   'code_execution',
   'google_search',
+  'google_maps',
+  'file_search',
+  'mcp',
   'url_context',
 ];
 
@@ -80,6 +87,12 @@ export interface ToolConfig {
 
   // URL Context
   targetUrl?: string;
+
+  // File Search
+  fileUris?: string[];
+
+  // MCP
+  mcpServerUrl?: string;
 }
 
 export interface FunctionParameter {

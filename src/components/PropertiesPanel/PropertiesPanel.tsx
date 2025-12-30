@@ -23,6 +23,9 @@ const GEMINI_MODELS_OPTIONS: { value: GeminiModel; label: string }[] = [
 
 const TOOL_TYPE_OPTIONS: { value: ToolType; label: string }[] = [
     { value: 'google_search', label: 'Google Search' },
+    { value: 'google_maps', label: 'Google Maps' },
+    { value: 'file_search', label: 'File Search' },
+    { value: 'mcp', label: 'MCP Server' },
     { value: 'code_execution', label: 'Code Execution' },
     { value: 'function_calling', label: 'Function Calling' },
     { value: 'url_context', label: 'URL Context' },
@@ -145,25 +148,19 @@ export function PropertiesPanel() {
                 />
             </div>
             <div className="prop-group">
-                <label>Enabled Tools</label>
-                <div className="tools-checkboxes">
-                    {TOOL_TYPE_OPTIONS.map(t => (
-                        <label key={t.value} className="checkbox-label">
-                            <input
-                                type="checkbox"
-                                checked={data.enabledTools?.includes(t.value) || false}
-                                onChange={(e) => {
-                                    const tools = data.enabledTools || [];
-                                    if (e.target.checked) {
-                                        handleUpdate({ enabledTools: [...tools, t.value] });
-                                    } else {
-                                        handleUpdate({ enabledTools: tools.filter(x => x !== t.value) });
-                                    }
-                                }}
-                            />
-                            {t.label}
-                        </label>
-                    ))}
+                <label className="checkbox-label" style={{ fontWeight: 'bold' }}>
+                    <input
+                        type="checkbox"
+                        checked={data.deepResearch || false}
+                        onChange={(e) => handleUpdate({ deepResearch: e.target.checked })}
+                    />
+                    Enable Deep Research 🧠
+                </label>
+            </div>
+            <div className="prop-group">
+                <label>Tools</label>
+                <div style={{ fontSize: '11px', color: '#888', fontStyle: 'italic', padding: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px' }}>
+                    Connect <b>Tool Nodes</b> to the <b>Tools</b> input handle on the Agent node to enable capabilities.
                 </div>
             </div>
         </>
@@ -211,6 +208,34 @@ export function PropertiesPanel() {
                         />
                     </div>
                 </>
+            )}
+            {data.toolType === 'file_search' && (
+                <div className="prop-group">
+                    <label>File URIs (One per line)</label>
+                    <textarea
+                        value={data.config?.fileUris?.join('\n') || ''}
+                        onChange={(e) => handleUpdate({
+                            config: {
+                                ...data.config,
+                                fileUris: e.target.value.split('\n').filter(u => u.trim() !== '')
+                            }
+                        })}
+                        rows={4}
+                        placeholder="gs://... or https://..."
+                    />
+                    <small style={{ color: '#888' }}>Enter URIs of files uploaded to Google AI Studio</small>
+                </div>
+            )}
+            {data.toolType === 'mcp' && (
+                <div className="prop-group">
+                    <label>MCP Server URL</label>
+                    <input
+                        type="url"
+                        value={data.config?.mcpServerUrl || ''}
+                        onChange={(e) => handleUpdate({ config: { ...data.config, mcpServerUrl: e.target.value } })}
+                        placeholder="http://localhost:3000/sse"
+                    />
+                </div>
             )}
             {data.toolType === 'url_context' && (
                 <div className="prop-group">
