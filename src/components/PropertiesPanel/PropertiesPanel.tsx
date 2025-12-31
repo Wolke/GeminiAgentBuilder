@@ -1,8 +1,7 @@
-// Properties Panel - Edit selected node properties
-
 import { useState } from 'react';
 import { useWorkflowStore } from '../../stores';
 import { GcpAuthService } from '../../services/gcpAuthService';
+import { requiresOAuth } from '../../types/gcp';
 import type {
     StartNodeData,
     AgentNodeData,
@@ -59,6 +58,12 @@ const TOOL_TYPE_BY_CATEGORY: Record<ToolCategory, { value: ToolType; label: stri
 
 export function PropertiesPanel() {
     const { nodes, selectedNodeId, updateNodeData, deleteNode, execution } = useWorkflowStore();
+
+    // State for GCP auth - updating this triggers re-render to refresh auth status
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_gcpAuthVersion, setGcpAuthVersion] = useState(0);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
 
     const selectedNode = nodes.find(n => n.id === selectedNodeId);
 
@@ -192,12 +197,6 @@ export function PropertiesPanel() {
         </>
     );
 
-    // State for GCP auth - updating this triggers re-render to refresh auth status
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_gcpAuthVersion, setGcpAuthVersion] = useState(0);
-    const [authError, setAuthError] = useState<string | null>(null);
-    const [isAuthenticating, setIsAuthenticating] = useState(false);
-
     const renderToolNodeProps = (data: ToolNodeData) => {
         // Helper to determine current category from toolType
         const getCurrentCategory = (): ToolCategory => {
@@ -208,8 +207,6 @@ export function PropertiesPanel() {
 
         const currentCategory = getCurrentCategory();
         const isGcpTool = GCP_API_TOOLS.includes(data.toolType as GcpApiTool);
-        // Re-check auth status on each render (gcpAuthVersion triggers re-render)
-        const isGcpAuthorized = isGcpTool && GcpAuthService.isToolAuthorized(data.toolType as GcpApiTool);
         const { settings } = useWorkflowStore.getState();
 
         const handleCategoryChange = (newCategory: ToolCategory) => {
@@ -273,56 +270,103 @@ export function PropertiesPanel() {
                     </select>
                 </div>
 
-                {/* GCP OAuth Login Button */}
-                {isGcpTool && !isGcpAuthorized && (
-                    <div className="prop-group">
-                        <div style={{
-                            padding: '12px',
-                            background: 'rgba(250, 166, 26, 0.1)',
-                            border: '1px solid #faa61a',
-                            borderRadius: '6px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ color: '#faa61a', marginBottom: '8px', fontSize: '12px' }}>
-                                ⚠️ 此工具需要 Google 授權
-                            </div>
-                            <button
-                                onClick={handleGcpLogin}
-                                disabled={isAuthenticating}
-                                style={{
-                                    background: isAuthenticating ? '#666' : '#4285f4',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    padding: '8px 16px',
-                                    cursor: isAuthenticating ? 'wait' : 'pointer',
-                                    fontSize: '13px',
-                                }}
-                            >
-                                {isAuthenticating ? '⏳ 授權中...' : '🔓 登入 Google 授權'}
-                            </button>
-                            {authError && (
-                                <div style={{ color: '#f04747', marginTop: '8px', fontSize: '11px' }}>
-                                    {authError}
+                {/* GCP Tool Authorization Status */}
+                {isGcpTool && (() => {
+                    const needsOAuth = requiresOAuth(data.toolType as GcpApiTool);
+                    const hasApiKey = !!settings.gcpApiKey;
+                    const isOAuthAuthorized = needsOAuth && GcpAuthService.isToolAuthorized(data.toolType as GcpApiTool);
+
+                    // OAuth-based tools (YouTube, Calendar, Gmail, Drive)
+                    if (needsOAuth) {
+                        if (isOAuthAuthorized) {
+                            return (
+                                <div className="prop-group">
+                                    <div style={{
+                                        padding: '8px',
+                                        background: 'rgba(67, 181, 129, 0.1)',
+                                        border: '1px solid #43b581',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        color: '#43b581'
+                                    }}>
+                                        ✅ OAuth 已授權
+                                    </div>
                                 </div>
-                            )}
+                            );
+                        }
+                        return (
+                            <div className="prop-group">
+                                <div style={{
+                                    padding: '12px',
+                                    background: 'rgba(250, 166, 26, 0.1)',
+                                    border: '1px solid #faa61a',
+                                    borderRadius: '6px',
+                                    textAlign: 'center'
+                                }}>
+                                    <div style={{ color: '#faa61a', marginBottom: '8px', fontSize: '12px' }}>
+                                        🔐 此工具需要 OAuth 授權
+                                    </div>
+                                    <button
+                                        onClick={handleGcpLogin}
+                                        disabled={isAuthenticating}
+                                        style={{
+                                            background: isAuthenticating ? '#666' : '#4285f4',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            padding: '8px 16px',
+                                            cursor: isAuthenticating ? 'wait' : 'pointer',
+                                            fontSize: '13px',
+                                        }}
+                                    >
+                                        {isAuthenticating ? '⏳ 授權中...' : '🔓 登入 Google 授權'}
+                                    </button>
+                                    {authError && (
+                                        <div style={{ color: '#f04747', marginTop: '8px', fontSize: '11px' }}>
+                                            {authError}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    // API Key-based tools (Places API)
+                    if (hasApiKey) {
+                        return (
+                            <div className="prop-group">
+                                <div style={{
+                                    padding: '8px',
+                                    background: 'rgba(67, 181, 129, 0.1)',
+                                    border: '1px solid #43b581',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    color: '#43b581'
+                                }}>
+                                    🔑 API Key 已設定
+                                </div>
+                            </div>
+                        );
+                    }
+                    return (
+                        <div className="prop-group">
+                            <div style={{
+                                padding: '12px',
+                                background: 'rgba(250, 166, 26, 0.1)',
+                                border: '1px solid #faa61a',
+                                borderRadius: '6px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ color: '#faa61a', marginBottom: '4px', fontSize: '12px' }}>
+                                    🔑 此工具需要 API Key
+                                </div>
+                                <div style={{ color: '#888', fontSize: '11px' }}>
+                                    請在左側 Settings 設定 GCP API Key
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                )}
-                {isGcpTool && isGcpAuthorized && (
-                    <div className="prop-group">
-                        <div style={{
-                            padding: '8px',
-                            background: 'rgba(67, 181, 129, 0.1)',
-                            border: '1px solid #43b581',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            color: '#43b581'
-                        }}>
-                            ✅ 已授權
-                        </div>
-                    </div>
-                )}
+                    );
+                })()}
 
                 {/* Tool-specific configs */}
                 {data.toolType === 'function_calling' && (

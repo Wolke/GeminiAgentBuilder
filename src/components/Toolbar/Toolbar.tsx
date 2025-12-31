@@ -154,6 +154,17 @@ export function Toolbar() {
                     />
                     <small style={{ color: '#888', fontSize: '10px' }}>Required for YouTube, Calendar, Gmail, Drive APIs</small>
                 </div>
+                <div className="settings-group">
+                    <label className="settings-label">GCP API Key</label>
+                    <input
+                        type="password"
+                        className="settings-input"
+                        value={settings.gcpApiKey || ''}
+                        onChange={(e) => updateSettings({ gcpApiKey: e.target.value })}
+                        placeholder="API Key for GCP services..."
+                    />
+                    <small style={{ color: '#888', fontSize: '10px' }}>For Places API and other API Key-based services</small>
+                </div>
             </div>
         </div>
     );

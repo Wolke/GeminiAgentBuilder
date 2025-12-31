@@ -143,6 +143,7 @@ const initialExecution: ExecutionContext = {
 const initialSettings: AppSettings = {
     geminiApiKey: '',
     gcpClientId: '',
+    gcpApiKey: '',
     defaultModel: 'gemini-2.5-flash',
     theme: 'dark',
 };

@@ -2,6 +2,8 @@
 
 import { useWorkflowStore } from '../stores/workflowStore';
 import { generateContent, initializeGemini } from './geminiService';
+import { getGcpFunctionDeclarations, executeGcpFunction } from './gcpApiExecutor';
+import { GCP_API_TOOLS } from '../types/nodes';
 import type {
     WorkflowNode,
     ExecutionStep,
@@ -10,7 +12,8 @@ import type {
     ConditionNodeData,
     ToolNodeData,
     OutputNodeData,
-    MemoryNodeData
+    MemoryNodeData,
+    GcpApiTool
 } from '../types';
 
 export class WorkflowEngine {
@@ -151,15 +154,30 @@ export class WorkflowEngine {
                     functionDeclarations: [] as any[],
                 };
 
+                // Collect GCP tools for function calling
+                const gcpTools: GcpApiTool[] = [];
+
                 // Helper to merge tool config
                 connectedTools.forEach(toolNode => {
                     const tData = toolNode?.data as ToolNodeData;
                     if (!tData) return;
 
+                    // Gemini built-in tools
                     if (tData.toolType === 'code_execution') toolsConfig.codeExecution = true;
                     if (tData.toolType === 'google_search') toolsConfig.googleSearch = true;
                     if (tData.toolType === 'google_maps') toolsConfig.googleMaps = true;
+
+                    // Check if it's a GCP API tool
+                    if (GCP_API_TOOLS.includes(tData.toolType as GcpApiTool)) {
+                        gcpTools.push(tData.toolType as GcpApiTool);
+                    }
                 });
+
+                // Add GCP function declarations to toolsConfig
+                if (gcpTools.length > 0) {
+                    const gcpFunctions = getGcpFunctionDeclarations(gcpTools);
+                    toolsConfig.functionDeclarations.push(...gcpFunctions);
+                }
 
                 // Fallback to legacy checkbox property if no connections
                 if (connectedTools.length === 0 && agentData.enabledTools) {
@@ -201,7 +219,29 @@ export class WorkflowEngine {
                     prompt = `Previous conversation:\n${historyText}\n\nUser: ${userMessage}`;
                 }
 
-                const result = await generateContent(prompt, agentData.systemPrompt, toolsConfig);
+                let result = await generateContent(prompt, agentData.systemPrompt, toolsConfig);
+
+                // Handle GCP function calls if present
+                if (result.functionCalls && result.functionCalls.length > 0) {
+                    const functionResults: string[] = [];
+
+                    for (const fc of result.functionCalls) {
+                        console.log(`[WorkflowEngine] Executing GCP function: ${fc.name}`, fc.args);
+                        const fcResult = await executeGcpFunction(fc.name, fc.args);
+                        functionResults.push(`Function ${fc.name} result:\n${JSON.stringify(fcResult, null, 2)}`);
+                    }
+
+                    // Generate a follow-up response with function results
+                    const functionContext = functionResults.join('\n\n');
+                    const followUpPrompt = `${prompt}\n\n[System] 已執行 API 呼叫，結果如下:\n${functionContext}\n\n請根據以上 API 結果回答用戶的問題。`;
+
+                    result = await generateContent(followUpPrompt, agentData.systemPrompt, {
+                        codeExecution: false,
+                        googleSearch: false,
+                        googleMaps: false,
+                        functionDeclarations: [],
+                    });
+                }
 
                 // Save to memory if connected
                 if (connectedMemoryNode) {

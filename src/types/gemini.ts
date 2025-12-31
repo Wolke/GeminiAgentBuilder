@@ -80,6 +80,7 @@ export interface GenerationResult {
 export interface AppSettings {
     geminiApiKey: string;
     gcpClientId: string;  // GCP OAuth Client ID for GCP API tools
+    gcpApiKey: string;    // API Key for GCP services (Places API, etc.)
     defaultModel: string;
     theme: 'dark' | 'light';
 }
