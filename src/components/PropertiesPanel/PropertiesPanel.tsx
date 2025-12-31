@@ -1,5 +1,6 @@
 // Properties Panel - Edit selected node properties
 
+import { useState } from 'react';
 import { useWorkflowStore } from '../../stores';
 import { GcpAuthService } from '../../services/gcpAuthService';
 import type {
@@ -191,6 +192,12 @@ export function PropertiesPanel() {
         </>
     );
 
+    // State for GCP auth - updating this triggers re-render to refresh auth status
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const [_gcpAuthVersion, setGcpAuthVersion] = useState(0);
+    const [authError, setAuthError] = useState<string | null>(null);
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
+
     const renderToolNodeProps = (data: ToolNodeData) => {
         // Helper to determine current category from toolType
         const getCurrentCategory = (): ToolCategory => {
@@ -201,6 +208,7 @@ export function PropertiesPanel() {
 
         const currentCategory = getCurrentCategory();
         const isGcpTool = GCP_API_TOOLS.includes(data.toolType as GcpApiTool);
+        // Re-check auth status on each render (gcpAuthVersion triggers re-render)
         const isGcpAuthorized = isGcpTool && GcpAuthService.isToolAuthorized(data.toolType as GcpApiTool);
         const { settings } = useWorkflowStore.getState();
 
@@ -208,18 +216,24 @@ export function PropertiesPanel() {
             // When category changes, reset to first tool of that category
             const firstTool = TOOL_TYPE_BY_CATEGORY[newCategory][0];
             handleUpdate({ toolType: firstTool.value, config: {} });
+            setAuthError(null);
         };
 
         const handleGcpLogin = async () => {
             if (!settings.gcpClientId) {
-                alert('Please configure GCP Client ID in Settings first.');
+                setAuthError('請先在 Settings 中設定 GCP Client ID');
                 return;
             }
+            setIsAuthenticating(true);
+            setAuthError(null);
             try {
                 await GcpAuthService.requestAccessForTool(data.toolType as GcpApiTool, settings.gcpClientId);
-                alert('Successfully authorized!');
+                // Trigger re-render by updating state
+                setGcpAuthVersion(v => v + 1);
             } catch (e: any) {
-                alert(`Authorization failed: ${e.message}`);
+                setAuthError(`授權失敗: ${e.message}`);
+            } finally {
+                setIsAuthenticating(false);
             }
         };
 
@@ -248,7 +262,10 @@ export function PropertiesPanel() {
                     <label>Tool Type</label>
                     <select
                         value={data.toolType}
-                        onChange={(e) => handleUpdate({ toolType: e.target.value as ToolType, config: {} })}
+                        onChange={(e) => {
+                            handleUpdate({ toolType: e.target.value as ToolType, config: {} });
+                            setAuthError(null);
+                        }}
                     >
                         {TOOL_TYPE_BY_CATEGORY[currentCategory].map(t => (
                             <option key={t.value} value={t.value}>{t.label}</option>
@@ -271,18 +288,24 @@ export function PropertiesPanel() {
                             </div>
                             <button
                                 onClick={handleGcpLogin}
+                                disabled={isAuthenticating}
                                 style={{
-                                    background: '#4285f4',
+                                    background: isAuthenticating ? '#666' : '#4285f4',
                                     color: 'white',
                                     border: 'none',
                                     borderRadius: '4px',
                                     padding: '8px 16px',
-                                    cursor: 'pointer',
+                                    cursor: isAuthenticating ? 'wait' : 'pointer',
                                     fontSize: '13px',
                                 }}
                             >
-                                🔓 登入 Google 授權
+                                {isAuthenticating ? '⏳ 授權中...' : '🔓 登入 Google 授權'}
                             </button>
+                            {authError && (
+                                <div style={{ color: '#f04747', marginTop: '8px', fontSize: '11px' }}>
+                                    {authError}
+                                </div>
+                            )}
                         </div>
                     </div>
                 )}
