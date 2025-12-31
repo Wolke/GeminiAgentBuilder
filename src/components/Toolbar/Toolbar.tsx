@@ -38,7 +38,6 @@ export function Toolbar() {
     const handleAddNode = (type: NodeType) => {
         // Calculate position that doesn't overlap with existing nodes
         const NODE_WIDTH = 200;
-        const NODE_HEIGHT = 120;
         const PADDING = 30;
 
         if (nodes.length === 0) {
@@ -143,6 +142,17 @@ export function Toolbar() {
                             💾
                         </button>
                     </div>
+                </div>
+                <div className="settings-group">
+                    <label className="settings-label">GCP Client ID</label>
+                    <input
+                        type="text"
+                        className="settings-input"
+                        value={settings.gcpClientId || ''}
+                        onChange={(e) => updateSettings({ gcpClientId: e.target.value })}
+                        placeholder="OAuth Client ID for GCP APIs..."
+                    />
+                    <small style={{ color: '#888', fontSize: '10px' }}>Required for YouTube, Calendar, Gmail, Drive APIs</small>
                 </div>
             </div>
         </div>

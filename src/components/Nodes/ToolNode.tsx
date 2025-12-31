@@ -1,30 +1,61 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
-import type { ToolNodeData, ToolType } from '../../types';
+import type { ToolNodeData, ToolType, ToolCategory } from '../../types';
+import { GEMINI_BUILTIN_TOOLS, GCP_API_TOOLS } from '../../types';
 import './nodes.css';
 
 const toolIcons: Record<ToolType, string> = {
-    function_calling: '⚡',
-    code_execution: '💻',
+    // Gemini Built-in
     google_search: '🔍',
-    google_maps: '🗺️',
+    code_execution: '💻',
     file_search: '📄',
-    mcp: '🔌',
     url_context: '🌐',
+    google_maps: '🗺️',
+    // GCP APIs
+    youtube_data: '📺',
+    google_calendar: '📅',
+    gmail: '✉️',
+    google_drive: '📁',
+    places_api: '📍',
+    // Custom MCP
+    mcp: '🔌',
+    function_calling: '⚡',
 };
 
 const toolLabels: Record<ToolType, string> = {
-    function_calling: 'Function Calling',
-    code_execution: 'Code Execution',
+    // Gemini Built-in
     google_search: 'Google Search',
-    google_maps: 'Google Maps',
+    code_execution: 'Code Execution',
     file_search: 'File Search',
-    mcp: 'MCP Client',
     url_context: 'URL Context',
+    google_maps: 'Maps Grounding',
+    // GCP APIs
+    youtube_data: 'YouTube API',
+    google_calendar: 'Calendar',
+    gmail: 'Gmail',
+    google_drive: 'Drive',
+    places_api: 'Places API',
+    // Custom MCP
+    mcp: 'MCP Server',
+    function_calling: 'Function Call',
+};
+
+const getToolCategory = (toolType: ToolType): ToolCategory => {
+    if (GEMINI_BUILTIN_TOOLS.includes(toolType as any)) return 'gemini_builtin';
+    if (GCP_API_TOOLS.includes(toolType as any)) return 'gcp_api';
+    return 'custom_mcp';
+};
+
+const categoryStyles: Record<ToolCategory, { bg: string; label: string }> = {
+    gemini_builtin: { bg: 'rgba(88, 101, 242, 0.15)', label: '✨ Gemini' },
+    gcp_api: { bg: 'rgba(66, 133, 244, 0.15)', label: '☁️ GCP' },
+    custom_mcp: { bg: 'rgba(250, 166, 26, 0.15)', label: '🔌 Custom' },
 };
 
 export function ToolNode({ data, selected }: NodeProps) {
     const nodeData = data as ToolNodeData & { isExecuting?: boolean };
+    const category = getToolCategory(nodeData.toolType);
+    const catStyle = categoryStyles[category];
 
     return (
         <div className={`custom-node tool-node ${selected ? 'selected' : ''} ${nodeData.isExecuting ? 'executing' : ''}`}>
@@ -34,6 +65,19 @@ export function ToolNode({ data, selected }: NodeProps) {
                 <span className="node-title">{nodeData.label}</span>
             </div>
             <div className="node-content">
+                <div
+                    className="node-category-badge"
+                    style={{
+                        background: catStyle.bg,
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        fontSize: '9px',
+                        marginBottom: '4px',
+                        display: 'inline-block'
+                    }}
+                >
+                    {catStyle.label}
+                </div>
                 <div className="node-tool-type">
                     {toolLabels[nodeData.toolType] || nodeData.toolType}
                 </div>
@@ -64,3 +108,4 @@ export function ToolNode({ data, selected }: NodeProps) {
         </div>
     );
 }
+

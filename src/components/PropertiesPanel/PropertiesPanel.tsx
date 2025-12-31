@@ -1,6 +1,7 @@
 // Properties Panel - Edit selected node properties
 
 import { useWorkflowStore } from '../../stores';
+import { GcpAuthService } from '../../services/gcpAuthService';
 import type {
     StartNodeData,
     AgentNodeData,
@@ -9,7 +10,13 @@ import type {
     OutputNodeData,
     MemoryNodeData,
     ToolType,
+    ToolCategory,
+    GcpApiTool,
     GeminiModel
+} from '../../types';
+import {
+    GEMINI_BUILTIN_TOOLS,
+    GCP_API_TOOLS,
 } from '../../types';
 import './PropertiesPanel.css';
 
@@ -22,15 +29,32 @@ const GEMINI_MODELS_OPTIONS: { value: GeminiModel; label: string }[] = [
     { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
 ];
 
-const TOOL_TYPE_OPTIONS: { value: ToolType; label: string }[] = [
-    { value: 'google_search', label: 'Google Search' },
-    { value: 'google_maps', label: 'Google Maps' },
-    { value: 'file_search', label: 'File Search' },
-    { value: 'mcp', label: 'MCP Server' },
-    { value: 'code_execution', label: 'Code Execution' },
-    { value: 'function_calling', label: 'Function Calling' },
-    { value: 'url_context', label: 'URL Context' },
+const TOOL_CATEGORY_OPTIONS: { value: ToolCategory; label: string; icon: string }[] = [
+    { value: 'gemini_builtin', label: 'Gemini Built-in', icon: '✨' },
+    { value: 'gcp_api', label: 'GCP API (OAuth)', icon: '☁️' },
+    { value: 'custom_mcp', label: 'Custom / MCP', icon: '🔌' },
 ];
+
+const TOOL_TYPE_BY_CATEGORY: Record<ToolCategory, { value: ToolType; label: string }[]> = {
+    gemini_builtin: [
+        { value: 'google_search', label: '🔍 Google Search' },
+        { value: 'code_execution', label: '💻 Code Execution' },
+        { value: 'file_search', label: '📄 File Search' },
+        { value: 'url_context', label: '🌐 URL Context' },
+        { value: 'google_maps', label: '🗺️ Google Maps Grounding' },
+    ],
+    gcp_api: [
+        { value: 'youtube_data', label: '📺 YouTube Data API' },
+        { value: 'google_calendar', label: '📅 Google Calendar' },
+        { value: 'gmail', label: '✉️ Gmail' },
+        { value: 'google_drive', label: '📁 Google Drive' },
+        { value: 'places_api', label: '📍 Places API' },
+    ],
+    custom_mcp: [
+        { value: 'mcp', label: '🔌 MCP Server' },
+        { value: 'function_calling', label: '⚡ Function Calling' },
+    ],
+};
 
 export function PropertiesPanel() {
     const { nodes, selectedNodeId, updateNodeData, deleteNode, execution } = useWorkflowStore();
@@ -167,90 +191,181 @@ export function PropertiesPanel() {
         </>
     );
 
-    const renderToolNodeProps = (data: ToolNodeData) => (
-        <>
-            <div className="prop-group">
-                <label>Label</label>
-                <input
-                    type="text"
-                    value={data.label}
-                    onChange={(e) => handleUpdate({ label: e.target.value })}
-                />
-            </div>
-            <div className="prop-group">
-                <label>Tool Type</label>
-                <select
-                    value={data.toolType}
-                    onChange={(e) => handleUpdate({ toolType: e.target.value as ToolType })}
-                >
-                    {TOOL_TYPE_OPTIONS.map(t => (
-                        <option key={t.value} value={t.value}>{t.label}</option>
-                    ))}
-                </select>
-            </div>
-            {data.toolType === 'function_calling' && (
-                <>
+    const renderToolNodeProps = (data: ToolNodeData) => {
+        // Helper to determine current category from toolType
+        const getCurrentCategory = (): ToolCategory => {
+            if (GEMINI_BUILTIN_TOOLS.includes(data.toolType as any)) return 'gemini_builtin';
+            if (GCP_API_TOOLS.includes(data.toolType as any)) return 'gcp_api';
+            return 'custom_mcp';
+        };
+
+        const currentCategory = getCurrentCategory();
+        const isGcpTool = GCP_API_TOOLS.includes(data.toolType as GcpApiTool);
+        const isGcpAuthorized = isGcpTool && GcpAuthService.isToolAuthorized(data.toolType as GcpApiTool);
+        const { settings } = useWorkflowStore.getState();
+
+        const handleCategoryChange = (newCategory: ToolCategory) => {
+            // When category changes, reset to first tool of that category
+            const firstTool = TOOL_TYPE_BY_CATEGORY[newCategory][0];
+            handleUpdate({ toolType: firstTool.value, config: {} });
+        };
+
+        const handleGcpLogin = async () => {
+            if (!settings.gcpClientId) {
+                alert('Please configure GCP Client ID in Settings first.');
+                return;
+            }
+            try {
+                await GcpAuthService.requestAccessForTool(data.toolType as GcpApiTool, settings.gcpClientId);
+                alert('Successfully authorized!');
+            } catch (e: any) {
+                alert(`Authorization failed: ${e.message}`);
+            }
+        };
+
+        return (
+            <>
+                <div className="prop-group">
+                    <label>Label</label>
+                    <input
+                        type="text"
+                        value={data.label}
+                        onChange={(e) => handleUpdate({ label: e.target.value })}
+                    />
+                </div>
+                <div className="prop-group">
+                    <label>Category</label>
+                    <select
+                        value={currentCategory}
+                        onChange={(e) => handleCategoryChange(e.target.value as ToolCategory)}
+                    >
+                        {TOOL_CATEGORY_OPTIONS.map(c => (
+                            <option key={c.value} value={c.value}>{c.icon} {c.label}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="prop-group">
+                    <label>Tool Type</label>
+                    <select
+                        value={data.toolType}
+                        onChange={(e) => handleUpdate({ toolType: e.target.value as ToolType, config: {} })}
+                    >
+                        {TOOL_TYPE_BY_CATEGORY[currentCategory].map(t => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* GCP OAuth Login Button */}
+                {isGcpTool && !isGcpAuthorized && (
                     <div className="prop-group">
-                        <label>Function Name</label>
-                        <input
-                            type="text"
-                            value={data.config?.functionName || ''}
-                            onChange={(e) => handleUpdate({ config: { ...data.config, functionName: e.target.value } })}
-                            placeholder="my_function"
-                        />
+                        <div style={{
+                            padding: '12px',
+                            background: 'rgba(250, 166, 26, 0.1)',
+                            border: '1px solid #faa61a',
+                            borderRadius: '6px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ color: '#faa61a', marginBottom: '8px', fontSize: '12px' }}>
+                                ⚠️ 此工具需要 Google 授權
+                            </div>
+                            <button
+                                onClick={handleGcpLogin}
+                                style={{
+                                    background: '#4285f4',
+                                    color: 'white',
+                                    border: 'none',
+                                    borderRadius: '4px',
+                                    padding: '8px 16px',
+                                    cursor: 'pointer',
+                                    fontSize: '13px',
+                                }}
+                            >
+                                🔓 登入 Google 授權
+                            </button>
+                        </div>
                     </div>
+                )}
+                {isGcpTool && isGcpAuthorized && (
                     <div className="prop-group">
-                        <label>Description</label>
+                        <div style={{
+                            padding: '8px',
+                            background: 'rgba(67, 181, 129, 0.1)',
+                            border: '1px solid #43b581',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            color: '#43b581'
+                        }}>
+                            ✅ 已授權
+                        </div>
+                    </div>
+                )}
+
+                {/* Tool-specific configs */}
+                {data.toolType === 'function_calling' && (
+                    <>
+                        <div className="prop-group">
+                            <label>Function Name</label>
+                            <input
+                                type="text"
+                                value={data.config?.functionName || ''}
+                                onChange={(e) => handleUpdate({ config: { ...data.config, functionName: e.target.value } })}
+                                placeholder="my_function"
+                            />
+                        </div>
+                        <div className="prop-group">
+                            <label>Description</label>
+                            <textarea
+                                value={data.config?.functionDescription || ''}
+                                onChange={(e) => handleUpdate({ config: { ...data.config, functionDescription: e.target.value } })}
+                                rows={2}
+                                placeholder="What this function does..."
+                            />
+                        </div>
+                    </>
+                )}
+                {data.toolType === 'file_search' && (
+                    <div className="prop-group">
+                        <label>File URIs (One per line)</label>
                         <textarea
-                            value={data.config?.functionDescription || ''}
-                            onChange={(e) => handleUpdate({ config: { ...data.config, functionDescription: e.target.value } })}
-                            rows={2}
-                            placeholder="What this function does..."
+                            value={data.config?.fileUris?.join('\n') || ''}
+                            onChange={(e) => handleUpdate({
+                                config: {
+                                    ...data.config,
+                                    fileUris: e.target.value.split('\n').filter(u => u.trim() !== '')
+                                }
+                            })}
+                            rows={4}
+                            placeholder="gs://... or https://..."
+                        />
+                        <small style={{ color: '#888' }}>Enter URIs of files uploaded to Google AI Studio</small>
+                    </div>
+                )}
+                {data.toolType === 'mcp' && (
+                    <div className="prop-group">
+                        <label>MCP Server URL</label>
+                        <input
+                            type="url"
+                            value={data.config?.mcpServerUrl || ''}
+                            onChange={(e) => handleUpdate({ config: { ...data.config, mcpServerUrl: e.target.value } })}
+                            placeholder="http://localhost:3000/sse"
                         />
                     </div>
-                </>
-            )}
-            {data.toolType === 'file_search' && (
-                <div className="prop-group">
-                    <label>File URIs (One per line)</label>
-                    <textarea
-                        value={data.config?.fileUris?.join('\n') || ''}
-                        onChange={(e) => handleUpdate({
-                            config: {
-                                ...data.config,
-                                fileUris: e.target.value.split('\n').filter(u => u.trim() !== '')
-                            }
-                        })}
-                        rows={4}
-                        placeholder="gs://... or https://..."
-                    />
-                    <small style={{ color: '#888' }}>Enter URIs of files uploaded to Google AI Studio</small>
-                </div>
-            )}
-            {data.toolType === 'mcp' && (
-                <div className="prop-group">
-                    <label>MCP Server URL</label>
-                    <input
-                        type="url"
-                        value={data.config?.mcpServerUrl || ''}
-                        onChange={(e) => handleUpdate({ config: { ...data.config, mcpServerUrl: e.target.value } })}
-                        placeholder="http://localhost:3000/sse"
-                    />
-                </div>
-            )}
-            {data.toolType === 'url_context' && (
-                <div className="prop-group">
-                    <label>Target URL</label>
-                    <input
-                        type="url"
-                        value={data.config?.targetUrl || ''}
-                        onChange={(e) => handleUpdate({ config: { ...data.config, targetUrl: e.target.value } })}
-                        placeholder="https://..."
-                    />
-                </div>
-            )}
-        </>
-    );
+                )}
+                {data.toolType === 'url_context' && (
+                    <div className="prop-group">
+                        <label>Target URL</label>
+                        <input
+                            type="url"
+                            value={data.config?.targetUrl || ''}
+                            onChange={(e) => handleUpdate({ config: { ...data.config, targetUrl: e.target.value } })}
+                            placeholder="https://..."
+                        />
+                    </div>
+                )}
+            </>
+        );
+    };
 
     const renderConditionNodeProps = (data: ConditionNodeData) => (
         <>

@@ -79,6 +79,7 @@ export interface GenerationResult {
 // App Settings stored in localStorage
 export interface AppSettings {
     geminiApiKey: string;
+    gcpClientId: string;  // GCP OAuth Client ID for GCP API tools
     defaultModel: string;
     theme: 'dark' | 'light';
 }

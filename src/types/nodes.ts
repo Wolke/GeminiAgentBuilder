@@ -56,24 +56,60 @@ export interface ToolNodeData extends BaseNodeData {
   config: ToolConfig;
 }
 
-export type ToolType =
-  | 'function_calling'
-  | 'code_execution'
-  | 'google_search'
-  | 'google_maps'
-  | 'file_search'
-  | 'mcp'
-  | 'url_context';
+// Tool Categories
+export type ToolCategory = 'gemini_builtin' | 'gcp_api' | 'custom_mcp';
 
-// Runtime constants for tool types
-export const TOOL_TYPES: ToolType[] = [
-  'function_calling',
-  'code_execution',
+// Category 1: Gemini Built-in Tools (直接由 Gemini API 支援)
+export type GeminiBuiltinTool =
+  | 'google_search'
+  | 'code_execution'
+  | 'file_search'
+  | 'url_context'
+  | 'google_maps';  // Gemini 內建的 Google Maps Grounding
+
+// Category 2: GCP APIs (需要 OAuth 認證)
+export type GcpApiTool =
+  | 'youtube_data'
+  | 'google_calendar'
+  | 'gmail'
+  | 'google_drive'
+  | 'places_api';
+
+// Category 3: Custom MCP (自訂整合)
+export type CustomMcpTool =
+  | 'mcp'
+  | 'function_calling';
+
+// Union of all tool types
+export type ToolType = GeminiBuiltinTool | GcpApiTool | CustomMcpTool;
+
+// Runtime constants for tool categories
+export const GEMINI_BUILTIN_TOOLS: GeminiBuiltinTool[] = [
   'google_search',
-  'google_maps',
+  'code_execution',
   'file_search',
-  'mcp',
   'url_context',
+  'google_maps',
+];
+
+export const GCP_API_TOOLS: GcpApiTool[] = [
+  'youtube_data',
+  'google_calendar',
+  'gmail',
+  'google_drive',
+  'places_api',
+];
+
+export const CUSTOM_MCP_TOOLS: CustomMcpTool[] = [
+  'mcp',
+  'function_calling',
+];
+
+// All tools combined (for backward compatibility)
+export const TOOL_TYPES: ToolType[] = [
+  ...GEMINI_BUILTIN_TOOLS,
+  ...GCP_API_TOOLS,
+  ...CUSTOM_MCP_TOOLS,
 ];
 
 export interface ToolConfig {
