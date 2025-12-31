@@ -220,3 +220,92 @@
     background: linear-gradient(135deg, #4ed496 0%, #43b581 100%);
     transform: translateY(-1px);
 }
+
+/* AI Workflow Generator */
+.ai-generator {
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.1) 0%, rgba(155, 89, 182, 0.1) 100%);
+    border: 1px solid rgba(88, 101, 242, 0.3);
+    border-radius: 12px;
+    padding: 16px;
+    margin: -8px;
+    margin-bottom: 8px;
+}
+
+.ai-generator .toolbar-title {
+    color: #a8b4ff;
+    font-size: 13px;
+}
+
+.ai-prompt-input {
+    width: 100%;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #3d3d50;
+    border-radius: 8px;
+    color: #e0e0e0;
+    font-size: 12px;
+    font-family: inherit;
+    resize: vertical;
+    min-height: 80px;
+    transition: all 0.15s ease;
+}
+
+.ai-prompt-input:focus {
+    outline: none;
+    border-color: #5865f2;
+    background: rgba(88, 101, 242, 0.1);
+}
+
+.ai-prompt-input::placeholder {
+    color: #606070;
+}
+
+.ai-prompt-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.ai-error {
+    color: #f04747;
+    font-size: 11px;
+    padding: 8px;
+    background: rgba(240, 71, 71, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(240, 71, 71, 0.2);
+}
+
+.action-button.generate {
+    width: 100%;
+    background: linear-gradient(135deg, #5865f2 0%, #9b59b6 100%);
+    color: white;
+    font-size: 13px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.action-button.generate:hover:not(:disabled) {
+    background: linear-gradient(135deg, #6875f5 0%, #a66bbe 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(88, 101, 242, 0.3);
+}
+
+.action-button.generate.generating {
+    background: linear-gradient(135deg, #faa61a 0%, #f57c00 100%);
+    cursor: wait;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.7;
+    }
+}

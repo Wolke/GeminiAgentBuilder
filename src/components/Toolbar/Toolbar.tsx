@@ -1,5 +1,6 @@
 // Toolbar Component - Node palette and workflow controls
 
+import { useState } from 'react';
 import { useWorkflowStore } from '../../stores';
 import { NodeType } from '../../types';
 import './Toolbar.css';
@@ -20,7 +21,7 @@ const nodeItems: NodeItem[] = [
     { type: 'output', label: 'Output', icon: '⬛', color: '#808090' },
 ];
 
-import { WorkflowEngine } from '../../services';
+import { WorkflowEngine, generateWorkflow, applyGeneratedWorkflow } from '../../services';
 
 export function Toolbar() {
     const {
@@ -34,6 +35,11 @@ export function Toolbar() {
         resetExecution,
         nodes,
     } = useWorkflowStore();
+
+    // AI Workflow Generator state
+    const [aiPrompt, setAiPrompt] = useState('');
+    const [isGenerating, setIsGenerating] = useState(false);
+    const [generateError, setGenerateError] = useState<string | null>(null);
 
     const handleAddNode = (type: NodeType) => {
         // Calculate position that doesn't overlap with existing nodes
@@ -58,10 +64,58 @@ export function Toolbar() {
         addNode(type, { x: newX, y: newY });
     };
 
+    const handleGenerateWorkflow = async () => {
+        if (!aiPrompt.trim()) {
+            setGenerateError('Please describe what you want to build.');
+            return;
+        }
+
+        if (!settings.geminiApiKey) {
+            setGenerateError('Please add your Gemini API key in Settings first.');
+            return;
+        }
+
+        setIsGenerating(true);
+        setGenerateError(null);
+
+        try {
+            const workflow = await generateWorkflow(aiPrompt);
+            applyGeneratedWorkflow(workflow);
+            setAiPrompt(''); // Clear input on success
+        } catch (error) {
+            setGenerateError(error instanceof Error ? error.message : 'Generation failed');
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
     const isRunning = execution.status === 'running';
 
     return (
         <div className="toolbar">
+            {/* AI Workflow Generator - Hero Feature */}
+            <div className="toolbar-section ai-generator">
+                <h3 className="toolbar-title">✨ AI Generate</h3>
+                <textarea
+                    className="ai-prompt-input"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="Describe your workflow in natural language...&#10;&#10;Examples:&#10;• Search Google for AI news and summarize&#10;• Check my calendar and send email reminders&#10;• Analyze a YouTube video"
+                    rows={4}
+                    disabled={isGenerating}
+                />
+                {generateError && (
+                    <div className="ai-error">{generateError}</div>
+                )}
+                <button
+                    className={`action-button generate ${isGenerating ? 'generating' : ''}`}
+                    onClick={handleGenerateWorkflow}
+                    disabled={isGenerating}
+                >
+                    {isGenerating ? '⏳ Generating...' : '⚡ Generate Workflow'}
+                </button>
+            </div>
+
             <div className="toolbar-section">
                 <h3 className="toolbar-title">Nodes</h3>
                 <div className="node-palette">
