@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useWorkflowStore } from '../../stores';
-import { NodeType } from '../../types';
+import { NodeType, GeminiModel, GEMINI_MODELS } from '../../types';
 import './Toolbar.css';
 
 interface NodeItem {
@@ -40,6 +40,7 @@ export function Toolbar() {
     const [aiPrompt, setAiPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [generateError, setGenerateError] = useState<string | null>(null);
+    const [selectedModel, setSelectedModel] = useState<GeminiModel>('gemini-2.5-flash');
 
     const handleAddNode = (type: NodeType) => {
         // Calculate position that doesn't overlap with existing nodes
@@ -79,7 +80,7 @@ export function Toolbar() {
         setGenerateError(null);
 
         try {
-            const workflow = await generateWorkflow(aiPrompt);
+            const workflow = await generateWorkflow(aiPrompt, selectedModel);
             applyGeneratedWorkflow(workflow);
             setAiPrompt(''); // Clear input on success
         } catch (error) {
@@ -96,6 +97,20 @@ export function Toolbar() {
             {/* AI Workflow Generator - Hero Feature */}
             <div className="toolbar-section ai-generator">
                 <h3 className="toolbar-title">✨ AI Generate</h3>
+                <div className="model-selector">
+                    <label>Model:</label>
+                    <select
+                        value={selectedModel}
+                        onChange={(e) => setSelectedModel(e.target.value as GeminiModel)}
+                        disabled={isGenerating}
+                    >
+                        {GEMINI_MODELS.map((model) => (
+                            <option key={model} value={model}>
+                                {model}
+                            </option>
+                        ))}
+                    </select>
+                </div>
                 <textarea
                     className="ai-prompt-input"
                     value={aiPrompt}

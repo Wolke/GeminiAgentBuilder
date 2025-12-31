@@ -30,7 +30,31 @@ const SYSTEM_PROMPT = `You are a workflow generator AI. Your job is to convert n
 - "places_api": Places/Business info
 
 ## GeminiModel options:
-"gemini-3.0-pro-preview", "gemini-3.0-flash", "gemini-2.5-pro", "gemini-2.5-flash"
+"gemini-2.5-flash", "gemini-2.5-pro", "gemini-3-flash-preview", "gemini-3-pro-preview"
+
+## CRITICAL: Node Handle IDs for Edges
+Each node has specific connection points (handles). You MUST use the correct sourceHandle and targetHandle in edges:
+
+### Start Node:
+- Source: right side (no id needed, omit sourceHandle)
+
+### Agent Node:
+- Target "main-input": left side (for main flow from start/other agents)
+- Target "tools": top (for tool connections)
+- Target "memory": bottom (for memory connections)
+- Source "main-output": right side (for output to next node)
+
+### Tool Node:
+- Target: left side (no id needed, omit targetHandle)
+- Source "tool-output": bottom (connects to agent's "tools" handle) ← USE THIS FOR TOOL→AGENT
+- Source "flow-output": right side (for sequential flow)
+
+### Output Node:
+- Target: left side (no id needed, omit targetHandle)
+
+### Memory Node:
+- Target "main-input": left side
+- Source "memory-output": top (connects to agent's "memory" handle)
 
 ## Output Format:
 Return ONLY valid JSON (no markdown, no explanation):
@@ -46,32 +70,33 @@ Return ONLY valid JSON (no markdown, no explanation):
   "edges": [
     {
       "id": "edge_1",
-      "source": "node_1",
-      "target": "node_2"
+      "source": "source_node_id",
+      "target": "target_node_id",
+      "sourceHandle": "handle_id_or_omit",
+      "targetHandle": "handle_id_or_omit"
     }
   ]
 }
 
 ## Position Guidelines:
-- Start node at x: 100
-- Each subsequent node +230 on x-axis
-- y: 150 for main flow
-- For conditions, branch nodes at y: 50 and y: 250
+- Start node at x: 100, y: 150
+- Agent node at x: 350, y: 150
+- Tool nodes ABOVE agent at x: 350, y: 0 (for tools handle on top)
+- Memory nodes BELOW agent at x: 350, y: 300 (for memory handle on bottom)
+- Output node at x: 600, y: 150
 
-## Example:
-User: "Search Google for AI news and summarize"
-Output:
+## Example: "Search Google for AI news and summarize"
 {
   "nodes": [
     { "id": "start_1", "type": "start", "position": { "x": 100, "y": 150 }, "data": { "label": "Start", "inputVariables": [{ "name": "query", "type": "string", "defaultValue": "AI news" }] }},
-    { "id": "agent_1", "type": "agent", "position": { "x": 330, "y": 150 }, "data": { "label": "Search & Summarize", "model": "gemini-3.0-flash", "systemPrompt": "Search the web for the given query and provide a comprehensive summary.", "temperature": 0.7 }},
-    { "id": "tool_1", "type": "tool", "position": { "x": 330, "y": 0 }, "data": { "label": "Google Search", "toolType": "google_search", "config": {} }},
-    { "id": "output_1", "type": "output", "position": { "x": 560, "y": 150 }, "data": { "label": "Output", "outputFormat": "markdown" }}
+    { "id": "agent_1", "type": "agent", "position": { "x": 350, "y": 150 }, "data": { "label": "Search & Summarize", "model": "gemini-2.5-flash", "systemPrompt": "Search the web for the given query and provide a comprehensive summary.", "temperature": 0.7 }},
+    { "id": "tool_1", "type": "tool", "position": { "x": 350, "y": 0 }, "data": { "label": "Google Search", "toolType": "google_search", "config": {} }},
+    { "id": "output_1", "type": "output", "position": { "x": 600, "y": 150 }, "data": { "label": "Output", "outputFormat": "markdown" }}
   ],
   "edges": [
-    { "id": "e1", "source": "start_1", "target": "agent_1" },
-    { "id": "e2", "source": "tool_1", "target": "agent_1" },
-    { "id": "e3", "source": "agent_1", "target": "output_1" }
+    { "id": "e1", "source": "start_1", "target": "agent_1", "targetHandle": "main-input" },
+    { "id": "e2", "source": "tool_1", "sourceHandle": "tool-output", "target": "agent_1", "targetHandle": "tools" },
+    { "id": "e3", "source": "agent_1", "sourceHandle": "main-output", "target": "output_1" }
   ]
 }`;
 
@@ -88,7 +113,7 @@ export interface GenerationError {
 /**
  * Generate a workflow from natural language description using Gemini 3
  */
-export async function generateWorkflow(description: string): Promise<GeneratedWorkflow> {
+export async function generateWorkflow(description: string, modelName: string = 'gemini-2.5-flash'): Promise<GeneratedWorkflow> {
     const { settings } = useWorkflowStore.getState();
 
     if (!settings.geminiApiKey) {
@@ -96,7 +121,7 @@ export async function generateWorkflow(description: string): Promise<GeneratedWo
     }
 
     // Initialize Gemini with the API key
-    initializeGemini(settings.geminiApiKey, 'gemini-3.0-pro-preview');
+    initializeGemini(settings.geminiApiKey, modelName);
 
     const prompt = `Generate a workflow for: "${description}"
 
@@ -107,7 +132,7 @@ Remember: Return ONLY valid JSON, no markdown code blocks, no explanations.`;
             prompt,
             SYSTEM_PROMPT,
             undefined,
-            'gemini-3.0-pro-preview'
+            modelName
         );
 
         if (!result.text) {
