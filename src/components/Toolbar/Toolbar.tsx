@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useWorkflowStore } from '../../stores';
 import { NodeType, GeminiModel, GEMINI_MODELS } from '../../types';
+import { requiresOAuth } from '../../types/gcp';
 import './Toolbar.css';
 
 interface NodeItem {
@@ -65,6 +66,8 @@ export function Toolbar() {
         addNode(type, { x: newX, y: newY });
     };
 
+    const [oauthWarning, setOauthWarning] = useState<string | null>(null);
+
     const handleGenerateWorkflow = async () => {
         if (!aiPrompt.trim()) {
             setGenerateError('Please describe what you want to build.');
@@ -78,11 +81,22 @@ export function Toolbar() {
 
         setIsGenerating(true);
         setGenerateError(null);
+        setOauthWarning(null);
 
         try {
             const workflow = await generateWorkflow(aiPrompt, selectedModel);
             applyGeneratedWorkflow(workflow);
             setAiPrompt(''); // Clear input on success
+
+            // Check for tools requiring OAuth
+            const oauthTools = workflow.nodes
+                .filter(n => n.type === 'tool' && requiresOAuth((n.data as any).toolType))
+                .map(n => (n.data as any).label);
+
+            if (oauthTools.length > 0) {
+                setOauthWarning(`⚠️ Note: This workflow uses tools that require OAuth login: ${oauthTools.join(', ')}. Please click the nodes to authorize.`);
+            }
+
         } catch (error) {
             setGenerateError(error instanceof Error ? error.message : 'Generation failed');
         } finally {
@@ -121,6 +135,9 @@ export function Toolbar() {
                 />
                 {generateError && (
                     <div className="ai-error">{generateError}</div>
+                )}
+                {oauthWarning && (
+                    <div className="ai-warning">{oauthWarning}</div>
                 )}
                 <button
                     className={`action-button generate ${isGenerating ? 'generating' : ''}`}

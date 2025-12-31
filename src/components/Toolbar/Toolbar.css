@@ -314,6 +314,16 @@
     border: 1px solid rgba(240, 71, 71, 0.2);
 }
 
+.ai-warning {
+    color: #faa61a;
+    font-size: 11px;
+    padding: 8px;
+    background: rgba(250, 166, 26, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(250, 166, 26, 0.2);
+    margin-bottom: 8px;
+}
+
 .action-button.generate {
     width: 100%;
     background: linear-gradient(135deg, #5865f2 0%, #9b59b6 100%);

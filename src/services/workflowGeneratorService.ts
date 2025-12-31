@@ -167,11 +167,58 @@ Remember: Return ONLY valid JSON, no markdown code blocks, no explanations.`;
             },
         }));
 
-        // Ensure all edges have required fields
-        workflow.edges = workflow.edges.map((edge, index) => ({
-            ...edge,
-            id: edge.id || `edge_${index}`,
-        }));
+        // Create a map for quick node type lookup
+        const nodeTypeMap = new Map<string, string>();
+        workflow.nodes.forEach(node => {
+            nodeTypeMap.set(node.id, node.type as string);
+        });
+
+        // Fix edge handles based on source and target node types
+        workflow.edges = workflow.edges.map((edge, index) => {
+            const sourceType = nodeTypeMap.get(edge.source);
+            const targetType = nodeTypeMap.get(edge.target);
+
+            let sourceHandle = edge.sourceHandle;
+            let targetHandle = edge.targetHandle;
+
+            // Rule 1: Tool → Agent should use tool-output → tools
+            if (sourceType === 'tool' && targetType === 'agent') {
+                sourceHandle = 'tool-output';
+                targetHandle = 'tools';
+            }
+            // Rule 2: Start → Agent should use (none) → main-input
+            else if (sourceType === 'start' && targetType === 'agent') {
+                sourceHandle = undefined;
+                targetHandle = 'main-input';
+            }
+            // Rule 3: Agent → Output/Condition should use main-output → (none)
+            else if (sourceType === 'agent' && (targetType === 'output' || targetType === 'condition')) {
+                sourceHandle = 'main-output';
+                targetHandle = undefined;
+            }
+            // Rule 4: Agent → Agent should use main-output → main-input
+            else if (sourceType === 'agent' && targetType === 'agent') {
+                sourceHandle = 'main-output';
+                targetHandle = 'main-input';
+            }
+            // Rule 5: Memory → Agent should use memory-output → memory
+            else if (sourceType === 'memory' && targetType === 'agent') {
+                sourceHandle = 'memory-output';
+                targetHandle = 'memory';
+            }
+            // Rule 6: Start → anything else should use (none) → (none) or main-input
+            else if (sourceType === 'start') {
+                sourceHandle = undefined;
+                targetHandle = targetType === 'memory' ? 'main-input' : undefined;
+            }
+
+            return {
+                ...edge,
+                id: edge.id || `edge_${index}`,
+                sourceHandle,
+                targetHandle,
+            };
+        });
 
         console.log('[WorkflowGenerator] Generated workflow:', workflow);
         return workflow;
