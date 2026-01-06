@@ -94,7 +94,7 @@ export function useExecution() {
 
             case 'tool': {
                 // Tool execution
-                const toolType = node.data.toolType as string;
+                const toolType = (node.data.toolType as string) || 'unknown';
                 const config = node.data.config as Record<string, unknown> || {};
                 const useGas = node.data.useGas ?? false;
                 const gasOnlyTools = ['sheets', 'gmail', 'drive', 'calendar', 'youtube'];
@@ -110,14 +110,27 @@ export function useExecution() {
                     };
                 }
 
-                // Local Gemini tools
+                // Local Gemini tools with grounding
                 console.log(`[Execution] Executing local tool: ${toolType}`);
                 try {
-                    const prompt = `You are a helpful assistant with ${toolType.replace('_', ' ')} capability.\n\nUser request: ${String(input)}\n\nProvide a helpful response.`;
+                    // Build the tools config for Gemini API
+                    const tools: Array<{ googleSearch?: Record<string, never>; codeExecution?: Record<string, never> }> = [];
+
+                    if (toolType === 'google_search') {
+                        tools.push({ googleSearch: {} });
+                    } else if (toolType === 'code_execution') {
+                        tools.push({ codeExecution: {} });
+                    }
+
+                    const prompt = tools.length > 0
+                        ? String(input)  // When using grounding tools, just pass the user's request directly
+                        : `You are a helpful assistant with ${toolType.replace('_', ' ')} capability.\n\nUser request: ${String(input)}\n\nProvide a helpful response.`;
+
                     const response = await geminiClient.generateContent(prompt, {
                         apiKey: settings.geminiApiKey!,
                         model: 'gemini-2.5-flash',
                         temperature: 0.7,
+                        tools: tools.length > 0 ? tools : undefined,
                     });
                     return {
                         success: true,

@@ -1,7 +1,6 @@
 // G8N - Gemini API Client
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { initialSettings } from '../../models/store/slices/settingsSlice';
 
 // Models
 import type { GeminiModel } from '../../models/types';
@@ -14,11 +13,13 @@ export interface GeminiRequestConfig {
     temperature?: number;
     maxOutputTokens?: number;
     systemInstruction?: string;
+    tools?: Array<{ googleSearch?: Record<string, never>; codeExecution?: Record<string, never> }>;
 }
 
 export interface GeminiGenerationResult {
     text: string;
     tokensUsed?: number;
+    groundingMetadata?: unknown;
 }
 
 // Client
@@ -65,18 +66,27 @@ export const geminiClient = {
                 maxOutputTokens: config.maxOutputTokens,
             };
 
-            const result = await model.generateContent({
+            // Build request with optional tools (for Google Search grounding, etc.)
+            const requestData: any = {
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
                 generationConfig,
-            });
+            };
+
+            // Add tools if specified (e.g., { googleSearch: {} } for grounding)
+            if (config.tools && config.tools.length > 0) {
+                requestData.tools = config.tools;
+            }
+
+            const result = await model.generateContent(requestData);
 
             const response = await result.response;
             const text = response.text();
 
-            // Estimate or extract token usage if available in metadata
+            // Extract token usage and grounding metadata if available
             const tokensUsed = response.usageMetadata?.totalTokenCount;
+            const groundingMetadata = (response.candidates?.[0] as any)?.groundingMetadata;
 
-            return { text, tokensUsed };
+            return { text, tokensUsed, groundingMetadata };
         } catch (error: any) {
             console.error('Gemini generation error:', error);
 

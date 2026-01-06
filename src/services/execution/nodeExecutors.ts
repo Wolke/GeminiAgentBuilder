@@ -74,7 +74,7 @@ const executors: Record<string, NodeExecutor> = {
     },
 
     tool: async (node, input, context) => {
-        const toolType = node.data.toolType as string;
+        const toolType = (node.data.toolType as string) || 'unknown';
         const config = (node.data.config as ToolConfig) || {};
         const useGas = node.data.useGas ?? false;
 
@@ -109,27 +109,40 @@ const executors: Record<string, NodeExecutor> = {
             }
         }
 
-        // Gemini builtin tools - execute locally via Gemini API
+        // Gemini builtin tools - execute locally via Gemini API with grounding
         console.log(`[NodeExecutor] Executing locally: ${toolType}`);
 
         try {
-            const prompt = `You are a helpful assistant with access to the ${toolType.replace('_', ' ')} tool.
-            
-User request: ${String(input)}
+            // Build the tools config for Gemini API
+            const tools: Array<{ googleSearch?: Record<string, never>; codeExecution?: Record<string, never> }> = [];
 
-Use the available tool to help answer this request.`;
+            if (toolType === 'google_search') {
+                tools.push({ googleSearch: {} });
+            } else if (toolType === 'code_execution') {
+                tools.push({ codeExecution: {} });
+            }
+
+            const prompt = tools.length > 0
+                ? String(input)  // When using grounding tools, just pass the user's request directly
+                : `You are a helpful assistant with access to the ${toolType.replace('_', ' ')} tool.\n\nUser request: ${String(input)}\n\nProvide a helpful response.`;
 
             const response = await geminiClient.generateContent(prompt, {
                 apiKey: context.apiKey,
                 model: 'gemini-2.5-flash',
                 temperature: 0.7,
+                tools: tools.length > 0 ? tools : undefined,
             });
 
             return {
                 success: true,
                 output: response.text,
                 nextNodeIds: context.getDownstreamNodeIds(node.id),
-                metadata: { toolType, executedLocally: true, tokensUsed: response.tokensUsed },
+                metadata: {
+                    toolType,
+                    executedLocally: true,
+                    tokensUsed: response.tokensUsed,
+                    groundingMetadata: response.groundingMetadata,
+                },
             };
         } catch (error) {
             return {

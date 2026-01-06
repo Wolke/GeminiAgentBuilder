@@ -131,8 +131,22 @@ export const createWorkflowSlice: StateCreator<
 
     // Workflow Actions
     setWorkflow: (workflow) => {
+        // Migrate nodes - ensure tool nodes have toolType set (for old workflows)
+        const migratedNodes = workflow.nodes.map((node): G8nNode => {
+            if (node.type === 'tool' && !(node.data as any).toolType) {
+                return {
+                    ...node,
+                    data: {
+                        ...node.data,
+                        toolType: 'google_search', // Default for old tool nodes
+                    },
+                } as G8nNode;
+            }
+            return node;
+        });
+
         set({
-            nodes: workflow.nodes,
+            nodes: migratedNodes,
             edges: workflow.edges,
             workflowId: workflow.id,
             workflowName: workflow.name,
