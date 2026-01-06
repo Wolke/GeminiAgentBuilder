@@ -4,4 +4,7 @@ export { StartNode } from './StartNode';
 export { AgentNode } from './AgentNode';
 export { OutputNode } from './OutputNode';
 export { ToolNode } from './ToolNode';
-export { ConditionNode, MemoryNode } from './PlaceholderNodes';
+export { MemoryNode } from './MemoryNode';
+export { ConditionNode } from './ConditionNode';
+
+

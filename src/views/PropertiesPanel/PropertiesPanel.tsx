@@ -1,6 +1,6 @@
-import { StartNodeForm, AgentNodeForm, OutputNodeForm, ToolNodeForm, AppSettingsForm } from './forms';
+import { StartNodeForm, AgentNodeForm, OutputNodeForm, ToolNodeForm, AppSettingsForm, MemoryNodeForm, ConditionNodeForm } from './forms';
 import { useG8nStore } from '../../models/store';
-import type { G8nNodeData, StartNodeData, AgentNodeData, OutputNodeData, ToolNodeData } from '../../models/types';
+import type { G8nNodeData, StartNodeData, AgentNodeData, OutputNodeData, ToolNodeData, MemoryNodeData, ConditionNodeData } from '../../models/types';
 import './PropertiesPanel.css';
 
 export function PropertiesPanel() {
@@ -79,12 +79,18 @@ export function PropertiesPanel() {
                     />
                 )}
 
-                {['condition', 'memory'].includes(selectedNode.type!) && (
-                    <div className="form-group">
-                        <p className="help-text">
-                            Properties for <strong>{selectedNode.type}</strong> are under construction.
-                        </p>
-                    </div>
+                {selectedNode.type === 'memory' && (
+                    <MemoryNodeForm
+                        data={selectedNode.data as MemoryNodeData}
+                        onChange={handleDataChange}
+                    />
+                )}
+
+                {selectedNode.type === 'condition' && (
+                    <ConditionNodeForm
+                        data={selectedNode.data as ConditionNodeData}
+                        onChange={handleDataChange}
+                    />
                 )}
             </div>
         </div>
