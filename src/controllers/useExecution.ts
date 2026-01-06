@@ -92,14 +92,42 @@ export function useExecution() {
                 }
             }
 
-            case 'tool':
-                // Tool execution placeholder - will be handled by GAS bridge in Phase 5/6
-                console.log(`[Execution] Tool node: ${node.data.toolType}`);
-                return {
-                    success: true,
-                    output: `[Tool: ${node.data.toolType}] - Execution pending GAS integration`,
-                    nextNodeIds: getDownstreamNodes(node.id).map((n) => n.id),
-                };
+            case 'tool': {
+                // Tool execution
+                const toolType = node.data.toolType as string;
+                const config = node.data.config as Record<string, unknown> || {};
+                const useGas = node.data.useGas ?? false;
+                const gasOnlyTools = ['sheets', 'gmail', 'drive', 'calendar', 'youtube'];
+                const isGasTool = gasOnlyTools.includes(toolType);
+
+                if (isGasTool || useGas) {
+                    // GAS tools require GAS bridge - for now return placeholder
+                    // TODO: Integrate with useGasBridge.executeTool when GAS is deployed
+                    console.log(`[Execution] Tool ${toolType} requires GAS bridge`);
+                    return {
+                        success: false,
+                        error: `Tool "${toolType}" requires GAS Web App. Please configure GAS settings and sync workflow.`,
+                    };
+                }
+
+                // Local Gemini tools
+                console.log(`[Execution] Executing local tool: ${toolType}`);
+                try {
+                    const prompt = `You are a helpful assistant with ${toolType.replace('_', ' ')} capability.\n\nUser request: ${String(input)}\n\nProvide a helpful response.`;
+                    const response = await geminiClient.generateContent(prompt, {
+                        apiKey: settings.geminiApiKey!,
+                        model: 'gemini-2.5-flash',
+                        temperature: 0.7,
+                    });
+                    return {
+                        success: true,
+                        output: response.text,
+                        nextNodeIds: getDownstreamNodes(node.id).map((n) => n.id),
+                    };
+                } catch (error) {
+                    return { success: false, error: error instanceof Error ? error.message : 'Tool execution failed' };
+                }
+            }
 
             case 'memory':
                 // Memory node just passes through - actual memory handling is in Agent node

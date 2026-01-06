@@ -1,6 +1,6 @@
 // G8N Node Executors - Pluggable per-node execution logic
 
-import type { G8nNode, GeminiModel } from '../../models/types';
+import type { G8nNode, GeminiModel, ToolConfig } from '../../models/types';
 import { geminiClient } from '../gemini';
 import type { NodeExecutionResult } from './engine';
 
@@ -18,6 +18,8 @@ export interface ExecutorContext {
     apiKey: string;
     conversationHistory: Array<{ role: string; content: string }>;
     getDownstreamNodeIds: (nodeId: string) => string[];
+    // Optional GAS execution callback
+    executeGasTool?: (toolType: string, config: ToolConfig) => Promise<{ success: boolean; data?: unknown; error?: string }>;
 }
 
 // ============================================
@@ -73,6 +75,7 @@ const executors: Record<string, NodeExecutor> = {
 
     tool: async (node, input, context) => {
         const toolType = node.data.toolType as string;
+        const config = (node.data.config as ToolConfig) || {};
         const useGas = node.data.useGas ?? false;
 
         // GAS tools or useGas=true -> require GAS Web App
@@ -80,18 +83,36 @@ const executors: Record<string, NodeExecutor> = {
         const isGasTool = gasOnlyTools.includes(toolType);
 
         if (isGasTool || useGas) {
-            console.log(`[NodeExecutor] Tool ${toolType} requires GAS Web App`);
-            return {
-                success: false,
-                error: `Tool "${toolType}" requires GAS Web App. Please sync workflow first.`,
-            };
+            // Execute via GAS bridge
+            if (!context.executeGasTool) {
+                return {
+                    success: false,
+                    error: `Tool "${toolType}" requires GAS Web App. Please configure GAS settings and sync workflow.`,
+                };
+            }
+
+            console.log(`[NodeExecutor] Executing via GAS: ${toolType}`);
+            const result = await context.executeGasTool(toolType, { ...config, input: String(input) });
+
+            if (result.success) {
+                return {
+                    success: true,
+                    output: result.data,
+                    nextNodeIds: context.getDownstreamNodeIds(node.id),
+                    metadata: { toolType, executedViaGas: true },
+                };
+            } else {
+                return {
+                    success: false,
+                    error: result.error || 'GAS tool execution failed',
+                };
+            }
         }
 
-        // Gemini builtin tools - execute locally via Gemini API with tools enabled
-        console.log(`[NodeExecutor] Executing Gemini tool locally: ${toolType}`);
+        // Gemini builtin tools - execute locally via Gemini API
+        console.log(`[NodeExecutor] Executing locally: ${toolType}`);
 
         try {
-            // For local Gemini tools, we pass the input through an agent with the tool enabled
             const prompt = `You are a helpful assistant with access to the ${toolType.replace('_', ' ')} tool.
             
 User request: ${String(input)}
@@ -108,11 +129,7 @@ Use the available tool to help answer this request.`;
                 success: true,
                 output: response.text,
                 nextNodeIds: context.getDownstreamNodeIds(node.id),
-                metadata: {
-                    toolType,
-                    executedLocally: true,
-                    tokensUsed: response.tokensUsed
-                },
+                metadata: { toolType, executedLocally: true, tokensUsed: response.tokensUsed },
             };
         } catch (error) {
             return {
