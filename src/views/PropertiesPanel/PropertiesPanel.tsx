@@ -1,4 +1,4 @@
-import { StartNodeForm, AgentNodeForm, OutputNodeForm, ToolNodeForm } from './forms';
+import { StartNodeForm, AgentNodeForm, OutputNodeForm, ToolNodeForm, AppSettingsForm } from './forms';
 import { useG8nStore } from '../../models/store';
 import type { G8nNodeData, StartNodeData, AgentNodeData, OutputNodeData, ToolNodeData } from '../../models/types';
 import './PropertiesPanel.css';
@@ -10,15 +10,19 @@ export function PropertiesPanel() {
 
     const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
+    const updateSettings = useG8nStore((state) => state.updateSettings);
+    const settings = useG8nStore((state) => state.settings);
+
     if (!selectedNode) {
         return (
             <div className="g8n-properties-panel">
                 <div className="panel-header">
-                    <h3>Properties</h3>
+                    <h3>Global Settings</h3>
                 </div>
-                <div className="panel-empty">
-                    <p>Select a node to edit its properties</p>
-                </div>
+                <AppSettingsForm
+                    settings={settings}
+                    onUpdate={updateSettings}
+                />
             </div>
         );
     }

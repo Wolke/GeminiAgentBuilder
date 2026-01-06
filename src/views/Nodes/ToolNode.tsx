@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { BaseNode } from './BaseNode';
+import { Handle, Position } from '@xyflow/react';
 import type { NodeProps, Node } from '@xyflow/react';
 import type { ToolNodeData } from '../../models/types';
 
@@ -27,6 +28,14 @@ export const ToolNode = memo((props: NodeProps<Node<ToolNodeData>>) => {
 
     return (
         <BaseNode {...props} icon={icon}>
+            {/* Handle for connecting from Agent (Top) */}
+            <Handle
+                type="target"
+                position={Position.Top}
+                id="tool-input"
+                isConnectable={true}
+                className="g8n-handle-top"
+            />
             <div className="node-info">
                 <div style={{ fontWeight: 600 }}>{toolType}</div>
                 {toolType === 'sheets' && data.config?.sheetName && (

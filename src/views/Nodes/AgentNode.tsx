@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { BaseNode } from './BaseNode';
+import { Handle, Position } from '@xyflow/react';
 import type { NodeProps, Node } from '@xyflow/react';
 import type { AgentNodeData } from '../../models/types';
 
@@ -16,6 +17,14 @@ export const AgentNode = memo((props: NodeProps<Node<AgentNodeData>>) => {
                     Temp: {data.temperature}
                 </div>
             </div>
+            {/* Handle for connecting to Tools/Memory (Bottom) */}
+            <Handle
+                type="source"
+                position={Position.Bottom}
+                id="agent-extensions"
+                isConnectable={true}
+                className="g8n-handle-bottom"
+            />
         </BaseNode>
     );
 });
