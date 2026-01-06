@@ -1,5 +1,4 @@
-// G8N Services - Google Auth Service
-// OAuth 2.0 authentication with Google Identity Services
+import { GOOGLE_SCOPES, STORAGE_KEYS } from '../../constants';
 
 export interface GoogleAuthConfig {
     clientId: string;
@@ -13,7 +12,7 @@ export interface GoogleAuthState {
 }
 
 // Storage keys
-const STORAGE_KEY = 'g8n_google_auth';
+const STORAGE_KEY = STORAGE_KEYS.GOOGLE_AUTH;
 
 class GoogleAuthService {
     private config: GoogleAuthConfig | null = null;
@@ -71,13 +70,7 @@ class GoogleAuthService {
 
         this.tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: this.config.clientId,
-            scope: [
-                'openid',
-                'email',
-                'https://www.googleapis.com/auth/script.projects',
-                'https://www.googleapis.com/auth/script.deployments',
-                'https://www.googleapis.com/auth/drive', // Required for listing and deleting projects
-            ].join(' '),
+            scope: GOOGLE_SCOPES.join(' '),
             callback: (response) => this.handleTokenResponse(response),
         });
     }

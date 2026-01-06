@@ -4,13 +4,15 @@ import { googleAuthService, type GoogleAuthState } from '../../../services/auth'
 import { gasApiService, type GasProject } from '../../../services/gas';
 import { useG8nStore } from '../../../models/store';
 
+import { G8N_PROJECT_PREFIX, STORAGE_KEYS } from '../../../constants';
+
 interface AppSettingsFormProps {
     settings: AppSettings;
     onUpdate: (settings: Partial<AppSettings>) => void;
 }
 
 // LocalStorage key for workflow backup
-const LOCAL_BACKUP_KEY = 'g8n_workflow_backup';
+const LOCAL_BACKUP_KEY = STORAGE_KEYS.WORKFLOW_BACKUP;
 
 export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProps) => {
     const [authState, setAuthState] = useState<GoogleAuthState>(googleAuthService.getState());
@@ -91,9 +93,9 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
     const handleCreateProject = useCallback(async () => {
         let rawName = newProjectName.trim() || getDefaultProjectName();
         // Auto-prepend G8N_ if not present
-        const projectName = rawName.toUpperCase().startsWith('G8N_')
+        const projectName = rawName.toUpperCase().startsWith(G8N_PROJECT_PREFIX)
             ? rawName
-            : `G8N_${rawName}`;
+            : `${G8N_PROJECT_PREFIX}${rawName}`;
 
         console.log('[G8N] Creating project:', projectName);
         setIsCreating(true);

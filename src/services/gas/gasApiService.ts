@@ -2,6 +2,12 @@
 // Apps Script API client for project management
 
 import { googleAuthService } from '../auth';
+import {
+  G8N_PROJECT_PREFIX,
+  G8N_WORKFLOW_FILE_NAME,
+  G8N_WORKFLOW_VAR_NAME,
+  LEGACY_WORKFLOW_FILES
+} from '../../constants';
 
 const API_BASE = 'https://script.googleapis.com/v1';
 
@@ -191,7 +197,7 @@ class GasApiService {
     }
 
     // Search Drive for Apps Script files starting with G8N
-    const query = encodeURIComponent("mimeType='application/vnd.google-apps.script' and name contains 'G8N' and trashed=false");
+    const query = encodeURIComponent(`mimeType='application/vnd.google-apps.script' and name contains '${G8N_PROJECT_PREFIX.replace('_', '')}' and trashed=false`);
     const response = await fetch(
       `https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc`,
       { headers: { Authorization: `Bearer ${state.accessToken}` } }
@@ -205,7 +211,7 @@ class GasApiService {
     const data = await response.json();
     // Further filter locally to ensure it starts with G8N (Drive API 'contains' is loose)
     return (data.files || [])
-      .filter((f: any) => f.name.toUpperCase().startsWith('G8N'))
+      .filter((f: any) => f.name.toUpperCase().startsWith(G8N_PROJECT_PREFIX))
       .map((f: any) => ({
         scriptId: f.id,
         title: f.name,
@@ -270,12 +276,12 @@ class GasApiService {
       const files = await this.getContent(scriptId);
       console.log('[GasApi] Files in project:', files.map(f => ({ name: f.name, type: f.type })));
 
-      const workflowFile = files.find((f) => f.name === 'G8nWorkflow' && f.type === 'SERVER_JS');
+      const workflowFile = files.find((f) => f.name === G8N_WORKFLOW_FILE_NAME && f.type === 'SERVER_JS');
       console.log('[GasApi] Found workflow file:', workflowFile ? 'Yes' : 'No');
 
       if (workflowFile) {
         // Parse the JS file to extract the JSON
-        const match = workflowFile.source.match(/var G8N_WORKFLOW = (\{[\s\S]*\});/);
+        const match = workflowFile.source.match(new RegExp(`var ${G8N_WORKFLOW_VAR_NAME} = (\\{[\\s\\S]*\\});`));
         console.log('[GasApi] Regex match:', match ? 'Yes' : 'No');
         if (match) {
           return JSON.parse(match[1]);
@@ -296,16 +302,16 @@ class GasApiService {
 
     // Filter out old workflow files
     const otherFiles = existingFiles.filter((f) =>
-      f.name !== 'G8nWorkflow' && f.name !== 'g8n' && f.name !== 'workflow'
+      f.name !== G8N_WORKFLOW_FILE_NAME && !LEGACY_WORKFLOW_FILES.includes(f.name)
     );
 
     // Add the new G8nWorkflow.gs file (SERVER_JS type avoids manifest validation)
     const files: GasFile[] = [
       ...otherFiles,
       {
-        name: 'G8nWorkflow',
+        name: G8N_WORKFLOW_FILE_NAME,
         type: 'SERVER_JS',
-        source: `// G8N Workflow Data - Auto-generated, do not edit manually\nvar G8N_WORKFLOW = ${JSON.stringify(workflow, null, 2)};\n`,
+        source: `// G8N Workflow Data - Auto-generated, do not edit manually\nvar ${G8N_WORKFLOW_VAR_NAME} = ${JSON.stringify(workflow, null, 2)};\n`,
       },
     ];
 
@@ -359,9 +365,9 @@ class GasApiService {
         source: this.getEngineJs(),
       },
       {
-        name: 'G8nWorkflow',
+        name: G8N_WORKFLOW_FILE_NAME,
         type: 'SERVER_JS',
-        source: `// G8N Workflow Data - Auto-generated, do not edit manually\nvar G8N_WORKFLOW = ${JSON.stringify(workflow, null, 2)};\n`,
+        source: `// G8N Workflow Data - Auto-generated, do not edit manually\nvar ${G8N_WORKFLOW_VAR_NAME} = ${JSON.stringify(workflow, null, 2)};\n`,
       },
     ];
 
