@@ -8,6 +8,9 @@ import {
   G8N_WORKFLOW_VAR_NAME,
   LEGACY_WORKFLOW_FILES
 } from '../../constants';
+import { CODE_JS } from './backend/code';
+import { ROUTER_JS } from './backend/router';
+import { ENGINE_JS } from './backend/engine';
 
 const API_BASE = 'https://script.googleapis.com/v1';
 
@@ -376,106 +379,15 @@ class GasApiService {
 
   // Embedded GAS code for syncing
   private getCodeJs(): string {
-    return `function doGet(e) {
-  return HtmlService.createHtmlOutput('G8N Backend is running. Please use POST requests for actions.');
-}
-
-function doPost(e) {
-  try {
-    const data = JSON.parse(e.postData.contents);
-    const result = Router.dispatch(data);
-    return ContentService.createTextOutput(JSON.stringify({
-      success: true,
-      data: result
-    })).setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({
-      success: false,
-      error: error.toString()
-    })).setMimeType(ContentService.MimeType.JSON);
-  }
-}`;
+    return CODE_JS;
   }
 
   private getRouterJs(): string {
-    return `const Router = {
-  dispatch(request) {
-    const { action, payload, token } = request;
-    const storedToken = PropertiesService.getScriptProperties().getProperty('API_TOKEN');
-    if (storedToken && token !== storedToken) {
-      throw new Error('Unauthorized: Invalid API Token');
-    }
-    switch (action) {
-      case 'ping': return 'pong';
-      case 'tool.execute': return Engine.executeTool(payload.toolType, payload.config);
-      case 'sheets':
-      case 'gmail':
-      case 'drive':
-      case 'calendar':
-      case 'youtube':
-        return Engine.executeTool(action, payload);
-      default:
-        throw new Error('Unknown action: ' + action);
-    }
-  }
-};`;
+    return ROUTER_JS;
   }
 
   private getEngineJs(): string {
-    return `const Engine = {
-  executeTool(toolType, config) {
-    switch (toolType) {
-      case 'sheets': return Tools.sheets(config);
-      case 'gmail': return Tools.gmail(config);
-      case 'drive': return Tools.drive(config);
-      case 'calendar': return Tools.calendar(config);
-      case 'youtube': return Tools.youtube(config);
-      default: throw new Error('Tool not supported: ' + toolType);
-    }
-  }
-};
-
-const Tools = {
-  sheets(config) {
-    if (config.spreadsheetId) {
-      const ss = SpreadsheetApp.openById(config.spreadsheetId);
-      const sheet = config.sheetName ? ss.getSheetByName(config.sheetName) : ss.getSheets()[0];
-      if (!sheet) throw new Error('Sheet not found');
-      if (config.action === 'append' && config.values) {
-        sheet.appendRow(Array.isArray(config.values) ? config.values : [config.values]);
-        return { success: true };
-      }
-      return sheet.getDataRange().getValues();
-    }
-    return { error: 'Invalid config' };
-  },
-  gmail(config) {
-    if (config.to && config.subject && config.body) {
-      GmailApp.sendEmail(config.to, config.subject, config.body);
-      return { success: true };
-    }
-    return { error: 'Invalid config' };
-  },
-  drive(config) {
-    if (config.query) {
-      const files = DriveApp.searchFiles(config.query);
-      const results = [];
-      while (files.hasNext() && results.length < 10) {
-        const f = files.next();
-        results.push({ name: f.getName(), id: f.getId(), url: f.getUrl() });
-      }
-      return results;
-    }
-    return { error: 'Invalid config' };
-  },
-  calendar(config) {
-    const events = CalendarApp.getDefaultCalendar().getEvents(new Date(), new Date(Date.now() + 604800000));
-    return events.map(e => ({ title: e.getTitle(), start: e.getStartTime() }));
-  },
-  youtube(config) {
-    return { error: 'YouTube requires Advanced Service' };
-  }
-};`;
+    return ENGINE_JS;
   }
 }
 

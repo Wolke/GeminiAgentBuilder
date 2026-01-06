@@ -22,7 +22,23 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
     const [isDeleting, setIsDeleting] = useState<string | null>(null); // Track which project is being deleted
     const [gasStatus, setGasStatus] = useState<string>('');
     const [projects, setProjects] = useState<GasProject[]>([]);
+
+    // Generate default project name with timestamp (without prefix for UI)
+
+    // Generate default project name with timestamp (without prefix for UI)
+    const generateDefaultName = useCallback(() => {
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+        const timeStr = now.toTimeString().slice(0, 5).replace(':', ''); // HHMM
+        return `${G8N_PROJECT_PREFIX}${dateStr}_${timeStr}`;
+    }, []);
+
     const [newProjectName, setNewProjectName] = useState<string>('');
+
+    // Set initial default name
+    useEffect(() => {
+        setNewProjectName(generateDefaultName());
+    }, [generateDefaultName]);
 
     const exportWorkflow = useG8nStore((state) => state.exportWorkflow);
     const setWorkflow = useG8nStore((state) => state.setWorkflow);
@@ -81,18 +97,13 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
         googleAuthService.signOut();
     }, []);
 
-    // Generate default project name with timestamp
-    // Generate default project name with timestamp (without prefix for UI)
-    const getDefaultProjectName = useCallback(() => {
-        const now = new Date();
-        const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
-        const timeStr = now.toTimeString().slice(0, 5).replace(':', ''); // HHMM
-        return `${dateStr}_${timeStr}`;
-    }, []);
-
     const handleCreateProject = useCallback(async () => {
-        let rawName = newProjectName.trim() || getDefaultProjectName();
-        // Auto-prepend G8N_ if not present
+        let rawName = newProjectName.trim();
+        if (!rawName) {
+            rawName = generateDefaultName();
+        }
+
+        // Auto-prepend G8N_ if not present and not using the full default name (which already has it)
         const projectName = rawName.toUpperCase().startsWith(G8N_PROJECT_PREFIX)
             ? rawName
             : `${G8N_PROJECT_PREFIX}${rawName}`;
@@ -105,7 +116,7 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
             console.log('[G8N] Project created:', project);
             onUpdate({ gasProjectId: project.scriptId });
             setGasStatus(`Created: ${project.title}`);
-            setNewProjectName(''); // Clear input after creation
+            setNewProjectName(generateDefaultName()); // Reset to new timestamp
             await loadProjects(); // Refresh list
         } catch (e) {
             console.error('[G8N] Create project failed:', e);
@@ -113,7 +124,7 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
         } finally {
             setIsCreating(false);
         }
-    }, [onUpdate, newProjectName, getDefaultProjectName, loadProjects]);
+    }, [onUpdate, newProjectName, generateDefaultName, loadProjects]);
 
     const handleSyncAll = useCallback(async () => {
         if (!settings.gasProjectId) {
@@ -366,7 +377,7 @@ export const AppSettingsForm = memo(({ settings, onUpdate }: AppSettingsFormProp
                                 type="text"
                                 value={newProjectName}
                                 onChange={(e) => setNewProjectName(e.target.value)}
-                                placeholder={`e.g. MyAgent_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`}
+                                placeholder="Project Name"
                                 style={{ flex: 1 }}
                             />
                             <button onClick={handleCreateProject} disabled={isCreating} className="btn-secondary">
