@@ -113,6 +113,12 @@ export const GAS_TOOLS: GasTool[] = [
 export interface ToolNodeData extends BaseNodeData {
     toolType: ToolType;
     config: ToolConfig;
+    /**
+     * When true, tool will be executed via GAS Web App.
+     * When false, uses local Gemini API (for builtin tools only).
+     * GAS-only tools (sheets, gmail, etc.) always require this to be true.
+     */
+    useGas?: boolean;
 }
 
 export interface ToolConfig {

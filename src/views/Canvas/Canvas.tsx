@@ -1,14 +1,13 @@
-// G8N Views - Canvas Component (Placeholder)
+// G8N Views - Canvas Component
 
+import { useCallback } from 'react';
 import { ReactFlow, Background, Controls, MiniMap, BackgroundVariant } from '@xyflow/react';
 import { StartNode, AgentNode, OutputNode, ToolNode, ConditionNode, MemoryNode } from '../Nodes';
-import type { NodeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useG8nStore } from '../../models/store';
 import './Canvas.css';
 
-// Cast to any to avoid strict NodeTypes incompatibility for now, 
-// as we know these components are compatible in practice.
+// Node type definitions
 const nodeTypes: any = {
     start: StartNode,
     agent: AgentNode,
@@ -24,6 +23,41 @@ export function Canvas() {
 
     const isRunMode = appMode === 'run';
 
+    // Validate connections based on handle types
+    const isValidConnection = useCallback((connection: any) => {
+        const { source, target, sourceHandle } = connection;
+        if (!source || !target) return false;
+
+        const sourceNode = nodes.find((n) => n.id === source);
+        const targetNode = nodes.find((n) => n.id === target);
+
+        if (!sourceNode || !targetNode) return false;
+
+        // Agent's Tool handle -> Only Tool nodes
+        if (sourceHandle === 'agent-tool') {
+            return targetNode.type === 'tool';
+        }
+
+        // Agent's Memory handle -> Only Memory nodes
+        if (sourceHandle === 'agent-memory') {
+            return targetNode.type === 'memory';
+        }
+
+        // Tool nodes can only receive from Agent's tool handle
+        if (targetNode.type === 'tool') {
+            return sourceNode.type === 'agent' && sourceHandle === 'agent-tool';
+        }
+
+        // Memory nodes can only receive from Agent's memory handle
+        if (targetNode.type === 'memory') {
+            return sourceNode.type === 'agent' && sourceHandle === 'agent-memory';
+        }
+
+        // Default output handle (undefined/null) can connect to any node except tool/memory
+        // This allows Agent -> Output, Start -> Agent, etc.
+        return true;
+    }, [nodes]);
+
     return (
         <div className="g8n-canvas">
             <ReactFlow
@@ -33,6 +67,7 @@ export function Canvas() {
                 onNodesChange={isRunMode ? undefined : onNodesChange}
                 onEdgesChange={isRunMode ? undefined : onEdgesChange}
                 onConnect={isRunMode ? undefined : onConnect}
+                isValidConnection={isValidConnection}
                 onNodeClick={(_, node) => selectNode(node.id)}
                 onPaneClick={() => selectNode(null)}
                 nodesDraggable={!isRunMode}
@@ -53,3 +88,4 @@ export function Canvas() {
         </div>
     );
 }
+

@@ -54,7 +54,9 @@ export const BaseNode = memo(({
                 <Handle
                     type="source"
                     position={Position.Right}
+                    id="output"
                     isConnectable={true}
+                    className="g8n-handle-right"
                 />
             )}
         </div>

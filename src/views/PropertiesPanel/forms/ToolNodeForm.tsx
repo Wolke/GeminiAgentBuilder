@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { GEMINI_BUILTIN_TOOLS, GAS_TOOLS } from '../../../models/types';
-import type { ToolNodeData, ToolType, ToolConfig } from '../../../models/types';
+import type { ToolNodeData, ToolType, ToolConfig, GasTool } from '../../../models/types';
 
 interface ToolNodeFormProps {
     data: ToolNodeData;
@@ -9,6 +9,8 @@ interface ToolNodeFormProps {
 
 export const ToolNodeForm = memo(({ data, onChange }: ToolNodeFormProps) => {
     const currentToolType = data.toolType || 'google_search';
+    const isGasTool = GAS_TOOLS.includes(currentToolType as GasTool);
+    const useGas = data.useGas ?? isGasTool; // Default to true for GAS tools
 
     const handleConfigChange = (key: keyof ToolConfig, value: any) => {
         onChange({
@@ -25,9 +27,16 @@ export const ToolNodeForm = memo(({ data, onChange }: ToolNodeFormProps) => {
                 <label>Tool Type</label>
                 <select
                     value={currentToolType}
-                    onChange={(e) => onChange({ toolType: e.target.value as ToolType })}
+                    onChange={(e) => {
+                        const newType = e.target.value as ToolType;
+                        const newIsGas = GAS_TOOLS.includes(newType as GasTool);
+                        onChange({
+                            toolType: newType,
+                            useGas: newIsGas ? true : data.useGas
+                        });
+                    }}
                 >
-                    <optgroup label="Gemini Built-in">
+                    <optgroup label="Gemini Built-in (Local)">
                         {GEMINI_BUILTIN_TOOLS.map((t) => (
                             <option key={t} value={t}>
                                 {t.replace('_', ' ').toUpperCase()}
@@ -42,6 +51,33 @@ export const ToolNodeForm = memo(({ data, onChange }: ToolNodeFormProps) => {
                         ))}
                     </optgroup>
                 </select>
+            </div>
+
+            {/* Execution Mode Toggle */}
+            <div className="form-group">
+                <label>Execution Mode</label>
+                <div className="toggle-group">
+                    <label className="toggle-label">
+                        <input
+                            type="checkbox"
+                            checked={useGas}
+                            disabled={isGasTool}
+                            onChange={(e) => onChange({ useGas: e.target.checked })}
+                        />
+                        <span>Use GAS Web App</span>
+                    </label>
+                </div>
+                {isGasTool && (
+                    <p className="help-text warning">
+                        ⚠️ <strong>{currentToolType.toUpperCase()}</strong> requires GAS Web App.
+                        Make sure workflow is synced.
+                    </p>
+                )}
+                {!isGasTool && !useGas && (
+                    <p className="help-text">
+                        Tool will execute locally via Gemini API.
+                    </p>
+                )}
             </div>
 
             <fieldset className="form-section">
@@ -98,7 +134,7 @@ export const ToolNodeForm = memo(({ data, onChange }: ToolNodeFormProps) => {
                 {!['sheets', 'gmail'].includes(currentToolType) && (
                     <div className="form-group">
                         <p className="help-text">
-                            No specific configuration needed for <strong>{currentToolType}</strong> yet.
+                            No specific configuration needed for <strong>{currentToolType}</strong>.
                         </p>
                     </div>
                 )}
@@ -106,3 +142,4 @@ export const ToolNodeForm = memo(({ data, onChange }: ToolNodeFormProps) => {
         </>
     );
 });
+

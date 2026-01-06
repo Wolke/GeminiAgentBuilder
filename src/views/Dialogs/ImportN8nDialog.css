@@ -1,0 +1,211 @@
+/* G8N Views - Import n8n Dialog Styles */
+
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.dialog-content {
+    background: #1a1a2e;
+    border-radius: 12px;
+    width: 480px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dialog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dialog-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #fff;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #fff;
+}
+
+.dialog-body {
+    padding: 20px;
+}
+
+.drop-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.drop-zone:hover,
+.drop-zone.dragging {
+    border-color: #6366f1;
+    background: rgba(99, 102, 241, 0.1);
+}
+
+.drop-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.drop-zone p {
+    margin: 0;
+    color: #ccc;
+}
+
+.drop-zone .sub-text {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.result-section {
+    text-align: center;
+}
+
+.file-name {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 16px;
+    color: #fff;
+}
+
+.success-message {
+    color: #22c55e;
+    font-size: 16px;
+    margin-bottom: 16px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 16px;
+}
+
+.stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat .label {
+    font-size: 12px;
+    color: #888;
+}
+
+.stat .value {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.warnings-section {
+    text-align: left;
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.warnings-section h4 {
+    margin: 0 0 8px 0;
+    color: #eab308;
+    font-size: 14px;
+}
+
+.warnings-section ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.error-section {
+    text-align: left;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.error-section h4 {
+    margin: 0 0 8px 0;
+    color: #ef4444;
+    font-size: 14px;
+}
+
+.error-section ul {
+    margin: 0;
+    padding-left: 20px;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.btn-secondary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: transparent;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.btn-primary {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    background: #6366f1;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: #4f46e5;
+}

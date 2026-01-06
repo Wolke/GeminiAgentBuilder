@@ -5,6 +5,7 @@ import { BaseNode } from './BaseNode';
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps, Node } from '@xyflow/react';
 import type { AgentNodeData } from '../../models/types';
+import './nodes.css';
 
 export const AgentNode = memo((props: NodeProps<Node<AgentNodeData>>) => {
     const { data } = props;
@@ -17,16 +18,34 @@ export const AgentNode = memo((props: NodeProps<Node<AgentNodeData>>) => {
                     Temp: {data.temperature}
                 </div>
             </div>
-            {/* Handle for connecting to Tools/Memory (Bottom) */}
-            <Handle
-                type="source"
-                position={Position.Bottom}
-                id="agent-extensions"
-                isConnectable={true}
-                className="g8n-handle-bottom"
-            />
+
+            {/* Agent Extension Handles (Bottom) */}
+            <div className="agent-extension-handles">
+                {/* Tool Handle - Left Bottom */}
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                    id="agent-tool"
+                    isConnectable={true}
+                    className="g8n-handle-bottom handle-tool"
+                    style={{ left: '30%' }}
+                />
+                <span className="handle-label tool-label">🔧</span>
+
+                {/* Memory Handle - Right Bottom */}
+                <Handle
+                    type="source"
+                    position={Position.Bottom}
+                    id="agent-memory"
+                    isConnectable={true}
+                    className="g8n-handle-bottom handle-memory"
+                    style={{ left: '70%' }}
+                />
+                <span className="handle-label memory-label">🧠</span>
+            </div>
         </BaseNode>
     );
 });
 
 AgentNode.displayName = 'AgentNode';
+
