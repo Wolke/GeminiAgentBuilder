@@ -1,0 +1,96 @@
+/* G8N Shared Node Styles */
+
+.g8n-node {
+    min-width: 180px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+
+.g8n-node.selected {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 2px rgba(88, 101, 242, 0.2);
+}
+
+.g8n-node:hover {
+    border-color: var(--color-border-hover);
+}
+
+/* Header */
+.node-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.node-icon {
+    font-size: 16px;
+}
+
+.node-title {
+    font-weight: 600;
+    font-size: var(--font-size-sm);
+    color: var(--color-text-primary);
+}
+
+/* Body */
+.node-body {
+    padding: var(--spacing-md);
+}
+
+.node-info {
+    font-size: var(--font-size-xs);
+    color: var(--color-text-secondary);
+}
+
+/* Handles */
+.react-flow__handle {
+    width: 10px;
+    height: 10px;
+    background: var(--color-bg-tertiary);
+    border: 2px solid var(--color-border);
+}
+
+.react-flow__handle:hover {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+}
+
+.react-flow__handle-right {
+    right: -6px;
+}
+
+.react-flow__handle-left {
+    left: -6px;
+}
+
+/* Type Specific Borders */
+.g8n-node.type-start {
+    border-top: 3px solid var(--color-node-start);
+}
+
+.g8n-node.type-agent {
+    border-top: 3px solid var(--color-node-agent);
+}
+
+.g8n-node.type-tool {
+    border-top: 3px solid var(--color-node-tool);
+}
+
+.g8n-node.type-condition {
+    border-top: 3px solid var(--color-node-condition);
+}
+
+.g8n-node.type-memory {
+    border-top: 3px solid var(--color-node-memory);
+}
+
+.g8n-node.type-output {
+    border-top: 3px solid var(--color-node-output);
+}

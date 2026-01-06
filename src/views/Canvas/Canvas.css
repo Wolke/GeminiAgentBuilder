@@ -1,0 +1,30 @@
+/* G8N Canvas Styles */
+
+.g8n-canvas {
+    flex: 1;
+    height: 100%;
+    background: var(--color-bg-primary);
+}
+
+.g8n-canvas-controls {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}
+
+.g8n-canvas-controls button {
+    background: var(--color-bg-tertiary);
+    border-bottom: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+.g8n-canvas-controls button:hover {
+    background: var(--color-accent);
+    color: white;
+}
+
+.g8n-canvas-minimap {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+}

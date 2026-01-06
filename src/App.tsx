@@ -1,58 +1,61 @@
-// Main App Component
+// G8N - Gemini Agent Builder
+// Main Application Component
 
 import { ReactFlowProvider } from '@xyflow/react';
-import { NodeCanvas, Toolbar, PropertiesPanel } from './components';
-import { ChatPanel } from './components/ChatPanel';
-import { useWorkflowStore } from './stores';
-import './App.css';
+import { Canvas } from './views/Canvas';
+import { Toolbar } from './views/Toolbar';
+import { PropertiesPanel } from './views/PropertiesPanel';
+import { ChatPanel } from './views/ChatPanel';
+import { useG8nStore } from './models/store';
+import './styles/theme.css';
 
 function App() {
-  const { appMode, setAppMode, clearChatMessages, resetExecution } = useWorkflowStore();
+    const appMode = useG8nStore((state) => state.ui.appMode);
 
-  const handleModeChange = (mode: 'edit' | 'run') => {
-    if (mode === 'edit' && appMode === 'run') {
-      // Switching from run to edit - clear execution state
-      resetExecution();
-    }
-    if (mode === 'run' && appMode === 'edit') {
-      // Switching from edit to run - clear chat
-      clearChatMessages();
-      resetExecution();
-    }
-    setAppMode(mode);
-  };
+    return (
+        <ReactFlowProvider>
+            <div className="g8n-app">
+                <header className="g8n-header">
+                    <div className="g8n-logo">
+                        <span className="logo-icon">⚡</span>
+                        <h1>G8N</h1>
+                    </div>
+                    <div className="mode-toggle">
+                        <ModeToggle />
+                    </div>
+                </header>
+                <main className="g8n-main">
+                    {appMode === 'edit' && <Toolbar />}
+                    <Canvas />
+                    {appMode === 'edit' ? <PropertiesPanel /> : <ChatPanel />}
+                </main>
+            </div>
+        </ReactFlowProvider>
+    );
+}
 
-  return (
-    <ReactFlowProvider>
-      <div className="app">
-        <header className="app-header">
-          <div className="app-logo">
-            <span className="logo-icon">✨</span>
-            <h1>Gemini Agent Builder</h1>
-          </div>
-          <div className="mode-toggle">
+function ModeToggle() {
+    // Use separate selectors to avoid returning new object each render
+    const appMode = useG8nStore((state) => state.ui.appMode);
+    const setAppMode = useG8nStore((state) => state.setAppMode);
+
+    return (
+        <>
             <button
-              className={`mode-btn ${appMode === 'edit' ? 'active' : ''}`}
-              onClick={() => handleModeChange('edit')}
+                className={`mode-btn ${appMode === 'edit' ? 'active' : ''}`}
+                onClick={() => setAppMode('edit')}
             >
-              ✏️ Edit
+                ✏️ Edit
             </button>
             <button
-              className={`mode-btn ${appMode === 'run' ? 'active' : ''}`}
-              onClick={() => handleModeChange('run')}
+                className={`mode-btn ${appMode === 'run' ? 'active' : ''}`}
+                onClick={() => setAppMode('run')}
             >
-              ▶ Run
+                ▶ Run
             </button>
-          </div>
-        </header>
-        <main className="app-main">
-          {appMode === 'edit' && <Toolbar />}
-          <NodeCanvas />
-          {appMode === 'edit' ? <PropertiesPanel /> : <ChatPanel />}
-        </main>
-      </div>
-    </ReactFlowProvider>
-  );
+        </>
+    );
 }
 
 export default App;
+

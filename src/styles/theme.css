@@ -1,0 +1,129 @@
+/* G8N - App Theme Styles */
+
+/* App Layout */
+.g8n-app {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    background: var(--color-bg-primary);
+}
+
+/* Header */
+.g8n-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 56px;
+    padding: 0 var(--spacing-lg);
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 100;
+}
+
+.g8n-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.g8n-logo .logo-icon {
+    font-size: 24px;
+}
+
+.g8n-logo h1 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    background: linear-gradient(135deg, #5865f2, #9b59b6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Mode Toggle */
+.mode-toggle {
+    display: flex;
+    gap: var(--spacing-xs);
+    background: var(--color-bg-tertiary);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-md);
+}
+
+.mode-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    transition: all var(--transition-fast);
+}
+
+.mode-btn:hover {
+    color: var(--color-text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mode-btn.active {
+    color: var(--color-text-primary);
+    background: var(--color-accent);
+}
+
+/* Main Content */
+.g8n-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Panels */
+.g8n-panel {
+    background: var(--color-bg-secondary);
+    border-right: 1px solid var(--color-border);
+}
+
+.g8n-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.g8n-panel-header h3 {
+    font-size: var(--font-size-md);
+    font-weight: 600;
+}
+
+.g8n-panel-content {
+    padding: var(--spacing-md);
+    overflow-y: auto;
+}
+
+/* Utility Classes */
+.flex {
+    display: flex;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.items-center {
+    align-items: center;
+}
+
+.justify-center {
+    justify-content: center;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.gap-sm {
+    gap: var(--spacing-sm);
+}
+
+.gap-md {
+    gap: var(--spacing-md);
+}
