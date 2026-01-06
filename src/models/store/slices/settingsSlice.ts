@@ -14,6 +14,13 @@ export interface AppSettings {
     // Debug
     debugMode: boolean;
     logLevel: 'error' | 'warn' | 'info' | 'debug';
+
+    // Google OAuth
+    googleOAuthClientId?: string;
+
+    // GAS Project
+    gasProjectId?: string;
+    gasWebAppUrl?: string;
 }
 
 export interface SettingsSlice {
@@ -33,6 +40,9 @@ const initialSettings: AppSettings = {
     defaultModel: 'gemini-2.5-flash',
     debugMode: false,
     logLevel: 'warn',
+    googleOAuthClientId: '',
+    gasProjectId: '',
+    gasWebAppUrl: '',
 };
 
 // ============================================
