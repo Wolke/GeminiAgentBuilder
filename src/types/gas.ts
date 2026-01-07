@@ -19,7 +19,7 @@ export type GasSyncStatus =
     | 'error';
 
 /**
- * GAS OAuth 登入狀態
+ * GAS OAuth Login State
  */
 export interface GasAuthState {
     isLoggedIn: boolean;
@@ -29,7 +29,7 @@ export interface GasAuthState {
 }
 
 /**
- * GAS 專案資訊
+ * GAS Project Info
  */
 export interface GasProject {
     scriptId: string;

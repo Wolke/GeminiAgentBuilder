@@ -218,7 +218,7 @@ export function PropertiesPanel() {
 
         const handleGcpLogin = async () => {
             if (!settings.gcpClientId) {
-                setAuthError('請先在 Settings 中設定 GCP Client ID');
+                setAuthError('Please set GCP Client ID in Settings first');
                 return;
             }
             setIsAuthenticating(true);
@@ -228,7 +228,7 @@ export function PropertiesPanel() {
                 // Trigger re-render by updating state
                 setGcpAuthVersion(v => v + 1);
             } catch (e: any) {
-                setAuthError(`授權失敗: ${e.message}`);
+                setAuthError(`Authorization failed: ${e.message}`);
             } finally {
                 setIsAuthenticating(false);
             }
@@ -289,7 +289,7 @@ export function PropertiesPanel() {
                                         fontSize: '12px',
                                         color: '#43b581'
                                     }}>
-                                        ✅ OAuth 已授權
+                                        ✅ OAuth Authorized
                                     </div>
                                     <div style={{
                                         marginTop: '8px',
@@ -300,7 +300,7 @@ export function PropertiesPanel() {
                                         fontSize: '11px',
                                         color: '#faa61a'
                                     }}>
-                                        ⚠️ 此工具僅支援本地執行，無法在 GAS 上調用
+                                        ⚠️ This tool only supports local execution and cannot be called on GAS
                                     </div>
                                 </div>
                             );
@@ -315,7 +315,7 @@ export function PropertiesPanel() {
                                     textAlign: 'center'
                                 }}>
                                     <div style={{ color: '#faa61a', marginBottom: '8px', fontSize: '12px' }}>
-                                        🔐 此工具需要 OAuth 授權
+                                        🔐 This tool requires OAuth authorization
                                     </div>
                                     <button
                                         onClick={handleGcpLogin}
@@ -330,7 +330,7 @@ export function PropertiesPanel() {
                                             fontSize: '13px',
                                         }}
                                     >
-                                        {isAuthenticating ? '⏳ 授權中...' : '🔓 登入 Google 授權'}
+                                        {isAuthenticating ? '⏳ Authorizing...' : '🔓 Login to Google to Authorize'}
                                     </button>
                                     {authError && (
                                         <div style={{ color: '#f04747', marginTop: '8px', fontSize: '11px' }}>
@@ -354,7 +354,7 @@ export function PropertiesPanel() {
                                     fontSize: '12px',
                                     color: '#43b581'
                                 }}>
-                                    🔑 API Key 已設定
+                                    🔑 API Key Set
                                 </div>
                             </div>
                         );
@@ -369,10 +369,10 @@ export function PropertiesPanel() {
                                 textAlign: 'center'
                             }}>
                                 <div style={{ color: '#faa61a', marginBottom: '4px', fontSize: '12px' }}>
-                                    🔑 此工具需要 API Key
+                                    🔑 This tool requires an API Key
                                 </div>
                                 <div style={{ color: '#888', fontSize: '11px' }}>
-                                    請在左側 Settings 設定 GCP API Key
+                                    Please set GCP API Key in Settings on the left
                                 </div>
                             </div>
                         </div>

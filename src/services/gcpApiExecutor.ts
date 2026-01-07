@@ -8,17 +8,17 @@ import type { GcpApiTool } from '../types/nodes';
 export const GCP_FUNCTION_DECLARATIONS: Record<GcpApiTool, any> = {
     youtube_data: {
         name: 'search_youtube_videos',
-        description: '在 YouTube 上搜尋影片。可用於查找特定主題、頻道或內容類型的影片。',
+        description: 'Search for videos on YouTube. Used to find videos of specific topics, channels, or content types.',
         parameters: {
             type: 'object',
             properties: {
                 query: {
                     type: 'string',
-                    description: '搜尋關鍵字',
+                    description: 'Search query',
                 },
                 maxResults: {
                     type: 'number',
-                    description: '最大結果數量 (1-50)',
+                    description: 'Max results (1-50)',
                 },
             },
             required: ['query'],
@@ -26,21 +26,21 @@ export const GCP_FUNCTION_DECLARATIONS: Record<GcpApiTool, any> = {
     },
     google_calendar: {
         name: 'list_calendar_events',
-        description: '列出 Google 日曆中的活動。可用於查看即將到來的行程或特定日期的活動。',
+        description: 'List events in Google Calendar. Used to view upcoming schedule or events on specific dates.',
         parameters: {
             type: 'object',
             properties: {
                 timeMin: {
                     type: 'string',
-                    description: '開始時間 (ISO 8601 格式，例如 2024-01-01T00:00:00Z)',
+                    description: 'Start time (ISO 8601 format, e.g., 2024-01-01T00:00:00Z)',
                 },
                 timeMax: {
                     type: 'string',
-                    description: '結束時間 (ISO 8601 格式)',
+                    description: 'End time (ISO 8601 format)',
                 },
                 maxResults: {
                     type: 'number',
-                    description: '最大結果數量',
+                    description: 'Max results',
                 },
             },
             required: [],
@@ -48,17 +48,17 @@ export const GCP_FUNCTION_DECLARATIONS: Record<GcpApiTool, any> = {
     },
     gmail: {
         name: 'search_gmail',
-        description: '搜尋 Gmail 郵件。可用於查找特定寄件人、主旨或內容的郵件。',
+        description: 'Search Gmail messages. Used to find emails from specific senders, with specific subjects or content.',
         parameters: {
             type: 'object',
             properties: {
                 query: {
                     type: 'string',
-                    description: '搜尋條件 (支援 Gmail 搜尋語法，如 from:xxx subject:xxx)',
+                    description: 'Search query (supports Gmail search syntax, e.g., from:xxx subject:xxx)',
                 },
                 maxResults: {
                     type: 'number',
-                    description: '最大結果數量',
+                    description: 'Max results',
                 },
             },
             required: ['query'],
@@ -66,17 +66,17 @@ export const GCP_FUNCTION_DECLARATIONS: Record<GcpApiTool, any> = {
     },
     google_drive: {
         name: 'list_drive_files',
-        description: '列出 Google Drive 中的檔案和資料夾。可用於瀏覽雲端硬碟內容。',
+        description: 'List files and folders in Google Drive. Used to browse cloud storage content.',
         parameters: {
             type: 'object',
             properties: {
                 query: {
                     type: 'string',
-                    description: '搜尋條件 (支援 Drive query 語法)',
+                    description: 'Search query (supports Drive query syntax)',
                 },
                 maxResults: {
                     type: 'number',
-                    description: '最大結果數量',
+                    description: 'Max results',
                 },
             },
             required: [],
@@ -84,21 +84,21 @@ export const GCP_FUNCTION_DECLARATIONS: Record<GcpApiTool, any> = {
     },
     places_api: {
         name: 'search_places',
-        description: '搜尋地點資訊。可用於查找餐廳、商店、景點等地點。',
+        description: 'Search for place information. Used to find restaurants, stores, attractions, etc.',
         parameters: {
             type: 'object',
             properties: {
                 query: {
                     type: 'string',
-                    description: '搜尋地點關鍵字',
+                    description: 'Search place query',
                 },
                 location: {
                     type: 'string',
-                    description: '位置座標 (格式: lat,lng)',
+                    description: 'Location coordinates (format: lat,lng)',
                 },
                 radius: {
                     type: 'number',
-                    description: '搜尋半徑 (公尺)',
+                    description: 'Search radius (meters)',
                 },
             },
             required: ['query'],
@@ -124,7 +124,7 @@ export async function executeGcpFunction(
 ): Promise<any> {
     const token = GcpAuthService.getAccessToken();
     if (!token) {
-        return { error: true, message: '未授權。請先登入 Google 授權。' };
+        return { error: true, message: 'Unauthorized. Please login to Google first.' };
     }
 
     const headers = {
@@ -258,7 +258,7 @@ export async function executeGcpFunction(
                 if (!apiKey) {
                     return {
                         error: true,
-                        message: '請先在 Settings 中設定 Places API Key。',
+                        message: 'Please set Places API Key in Settings first.',
                     };
                 }
 

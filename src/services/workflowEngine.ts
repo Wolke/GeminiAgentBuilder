@@ -109,9 +109,9 @@ export class WorkflowEngine {
             let errorMessage = 'Workflow execution failed.';
             if (error?.message) {
                 if (error.message.includes('429') || error.message.includes('quota')) {
-                    errorMessage = '⏳ API 配額已達上限，請稍後再試（約 1 分鐘）或更換 API Key。';
+                    errorMessage = '⏳ API quota exceeded. Please try again later (approx. 1 min) or change API Key.';
                 } else if (error.message.includes('401') || error.message.includes('API key')) {
-                    errorMessage = '🔑 API Key 無效，請檢查設定。';
+                    errorMessage = '🔑 Invalid API Key. Please check settings.';
                 } else {
                     errorMessage = `❌ ${error.message.slice(0, 200)}`;
                 }
@@ -233,7 +233,7 @@ export class WorkflowEngine {
 
                     // Generate a follow-up response with function results
                     const functionContext = functionResults.join('\n\n');
-                    const followUpPrompt = `${prompt}\n\n[System] 已執行 API 呼叫，結果如下:\n${functionContext}\n\n請根據以上 API 結果回答用戶的問題。`;
+                    const followUpPrompt = `${prompt}\n\n[System] API call executed, results start:\n${functionContext}\n\nPlease answer the user's question based on the API results above.`;
 
                     result = await generateContent(followUpPrompt, agentData.systemPrompt, {
                         codeExecution: false,

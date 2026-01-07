@@ -196,7 +196,7 @@ export function GasProjectManager() {
         if (!selectedProject || !gasAuth.accessToken) return;
 
         const confirmed = window.confirm(
-            `確定要刪除專案 "${selectedProject.title}" 嗎？\n此操作無法復原！`
+            `Are you sure you want to delete project "${selectedProject.title}"?\nThis action cannot be undone!`
         );
         if (!confirmed) return;
 

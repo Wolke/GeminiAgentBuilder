@@ -59,15 +59,15 @@ export interface ToolNodeData extends BaseNodeData {
 // Tool Categories
 export type ToolCategory = 'gemini_builtin' | 'gcp_api' | 'custom_mcp';
 
-// Category 1: Gemini Built-in Tools (直接由 Gemini API 支援)
+// Category 1: Gemini Built-in Tools (Supported explicitly by Gemini API)
 export type GeminiBuiltinTool =
   | 'google_search'
   | 'code_execution'
   | 'file_search'
   | 'url_context'
-  | 'google_maps';  // Gemini 內建的 Google Maps Grounding
+  | 'google_maps';  // Gemini Built-in Google Maps Grounding
 
-// Category 2: GCP APIs (需要 OAuth 認證)
+// Category 2: GCP APIs (Requires OAuth)
 export type GcpApiTool =
   | 'youtube_data'
   | 'google_calendar'
@@ -75,7 +75,7 @@ export type GcpApiTool =
   | 'google_drive'
   | 'places_api';
 
-// Category 3: Custom MCP (自訂整合)
+// Category 3: Custom MCP (Custom Integration)
 export type CustomMcpTool =
   | 'mcp'
   | 'function_calling';

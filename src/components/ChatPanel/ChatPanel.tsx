@@ -26,7 +26,7 @@ export function ChatPanel() {
             if (result) {
                 // Check if it's an error response
                 if (typeof result === 'object' && result.error === true) {
-                    addChatMessage({ role: 'assistant', content: result.message || '❌ 執行失敗' });
+                    addChatMessage({ role: 'assistant', content: result.message || '❌ Execution failed' });
                 } else {
                     const responseText = typeof result === 'string'
                         ? result
@@ -36,10 +36,10 @@ export function ChatPanel() {
                     addChatMessage({ role: 'assistant', content: responseText });
                 }
             } else {
-                addChatMessage({ role: 'assistant', content: '❌ Workflow 沒有回傳結果' });
+                addChatMessage({ role: 'assistant', content: '❌ Workflow returned no result' });
             }
         } catch (error: any) {
-            addChatMessage({ role: 'assistant', content: `❌ 發生未預期的錯誤: ${error?.message || '未知錯誤'}` });
+            addChatMessage({ role: 'assistant', content: `❌ Unexpected error: ${error?.message || 'Unknown error'}` });
         }
     };
 
