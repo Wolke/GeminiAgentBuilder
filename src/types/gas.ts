@@ -143,7 +143,7 @@ export interface AppsScriptProject {
 
 export interface AppsScriptFile {
     name: string;
-    type: 'SERVER_JS' | 'JSON';
+    type: 'SERVER_JS' | 'JSON' | 'HTML';
     source: string;
 }
 

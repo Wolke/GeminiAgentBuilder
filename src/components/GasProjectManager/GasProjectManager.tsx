@@ -232,12 +232,29 @@ export function GasProjectManager() {
             const workflow = exportWorkflow();
             // Update workflow name to match project name
             workflow.name = selectedProject.title.replace(/^G8N[-_]?/i, '') || workflow.name;
+
+            // 1. Sync files
             await gasDeployService.syncAll(
                 selectedProject.scriptId,
                 workflow,
                 gasAuth.accessToken
             );
-            setSuccessMessage('Synced code + workflow!');
+
+            // 2. If Web App exists and we have an API key, sync it
+            if (webAppUrl && settings.geminiApiKey) {
+                setLoadingMessage('Syncing API Key...');
+                const result = await gasDeployService.syncApiKey(
+                    webAppUrl,
+                    settings.geminiApiKey,
+                    gasAuth.accessToken // apiToken
+                );
+
+                if (!result.success) {
+                    console.warn('API Key sync warning:', result.error);
+                }
+            }
+
+            setSuccessMessage('Synced code + workflow + API Key!');
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Sync failed');
@@ -261,7 +278,18 @@ export function GasProjectManager() {
                 gasAuth.accessToken
             );
             setWebAppUrl(deployment.webAppUrl);
-            setSuccessMessage(`Deployed v${deployment.version}!`);
+
+            // Sync API Key immediately after deploy
+            if (settings.geminiApiKey) {
+                setLoadingMessage('Syncing API Key...');
+                await gasDeployService.syncApiKey(
+                    deployment.webAppUrl,
+                    settings.geminiApiKey,
+                    gasAuth.accessToken // apiToken
+                );
+            }
+
+            setSuccessMessage(`Deployed v${deployment.version} & Synced Key!`);
             setTimeout(() => setSuccessMessage(null), 5000);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Deploy failed');

@@ -7,6 +7,8 @@ import type { Workflow } from '../types/nodes';
 import CodeJs from '../gas/Code.js?raw';
 import RouterJs from '../gas/Router.js?raw';
 import EngineJs from '../gas/Engine.js?raw';
+import WorkflowRunnerJs from '../gas/WorkflowRunner.js?raw';
+import TestDialogHtml from '../gas/TestDialog.html?raw';
 
 const APPS_SCRIPT_API_BASE = 'https://script.googleapis.com/v1';
 
@@ -43,6 +45,8 @@ export const gasDeployService = {
             { name: 'Code', type: 'SERVER_JS', source: CodeJs },
             { name: 'Router', type: 'SERVER_JS', source: RouterJs },
             { name: 'Engine', type: 'SERVER_JS', source: EngineJs },
+            { name: 'WorkflowRunner', type: 'SERVER_JS', source: WorkflowRunnerJs },
+            { name: 'TestDialog', type: 'HTML', source: TestDialogHtml },
             { name: 'appsscript', type: 'JSON', source: APPSSCRIPT_MANIFEST },
         ];
     },
@@ -552,18 +556,48 @@ function getWorkflow() {
             accessToken
         );
 
-        // Step 2: Get existing deployments to check for Web App
-        const deployments = await this.listDeployments(scriptId, accessToken);
-        const existingWebApp = deployments.find(d => d.webAppUrl);
-
-        // Step 3: Create or update deployment
+        // Step 2: Always create a NEW deployment (don't try to update existing)
+        // This avoids "Read-only deployments may not be modified" errors
         const deployment = await this.deployWebApp(
             scriptId,
             versionNumber,
-            accessToken,
-            existingWebApp?.deploymentId
+            accessToken
+            // Don't pass existingDeploymentId - always create new
         );
 
         return deployment;
+    },
+
+    /**
+     * Sync Gemini API key to GAS project via Router action
+     * This stores the key in GAS Script Properties
+     */
+    async syncApiKey(
+        webAppUrl: string,
+        apiKey: string,
+        apiToken?: string
+    ): Promise<{ success: boolean; error?: string }> {
+        try {
+            // Use text/plain to avoid CORS preflight (OPTIONS) which GAS doesn't support
+            const response = await fetch(webAppUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify({
+                    action: 'system.set_api_key',
+                    payload: { apiKey },
+                    token: apiToken
+                }),
+            });
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            return {
+                success: false,
+                error: error instanceof Error ? error.message : 'Failed to sync API key'
+            };
+        }
     },
 };
