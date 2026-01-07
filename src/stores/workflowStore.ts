@@ -14,7 +14,9 @@ import {
     ToolNodeData,
     ConditionNodeData,
     OutputNodeData,
-    MemoryNodeData
+    MemoryNodeData,
+    GasConfig,
+    DEFAULT_GAS_CONFIG,
 } from '../types';
 import {
     addEdge,
@@ -102,6 +104,9 @@ interface WorkflowState {
     // Chat messages for run mode
     chatMessages: ChatMessage[];
 
+    // GAS configuration
+    gasConfig: GasConfig;
+
     // Actions
     onNodesChange: (changes: NodeChange<WorkflowNode>[]) => void;
     onEdgesChange: (changes: EdgeChange<WorkflowEdge>[]) => void;
@@ -131,6 +136,11 @@ interface WorkflowState {
     // Chat
     addChatMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => void;
     clearChatMessages: () => void;
+
+    // GAS actions
+    updateGasConfig: (config: Partial<GasConfig>) => void;
+    setGasSyncStatus: (status: GasConfig['syncStatus']) => void;
+    exportWorkflow: () => Workflow;
 }
 
 const initialExecution: ExecutionContext = {
@@ -161,6 +171,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             settings: initialSettings,
             appMode: 'edit' as AppMode,
             chatMessages: [],
+            gasConfig: DEFAULT_GAS_CONFIG,
 
             onNodesChange: (changes) => {
                 set({
@@ -314,6 +325,33 @@ export const useWorkflowStore = create<WorkflowState>()(
 
             clearChatMessages: () => {
                 set({ chatMessages: [] });
+            },
+
+            // GAS actions
+            updateGasConfig: (config) => {
+                set({
+                    gasConfig: { ...get().gasConfig, ...config },
+                });
+            },
+
+            setGasSyncStatus: (status) => {
+                set({
+                    gasConfig: { ...get().gasConfig, syncStatus: status },
+                });
+            },
+
+            exportWorkflow: () => {
+                const { nodes, edges, workflowName, workflowDescription } = get();
+                const now = new Date().toISOString();
+                return {
+                    id: `workflow-${Date.now()}`,
+                    name: workflowName,
+                    description: workflowDescription,
+                    nodes,
+                    edges,
+                    createdAt: now,
+                    updatedAt: now,
+                };
             },
         }),
         {

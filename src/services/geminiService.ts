@@ -1,7 +1,7 @@
 // Gemini Service - API integration for Gemini AI
 
-import { GoogleGenerativeAI, GenerativeModel, Part, Tool } from '@google/generative-ai';
-import { GeminiConfig, FunctionDeclaration, GenerationResult } from '../types';
+import { GoogleGenerativeAI, GenerativeModel, Part, Tool, FunctionDeclaration as SdkFunctionDeclaration } from '@google/generative-ai';
+import { FunctionDeclaration, GenerationResult } from '../types';
 
 let genAI: GoogleGenerativeAI | null = null;
 let model: GenerativeModel | null = null;
@@ -46,7 +46,7 @@ export async function generateContent(
                     name: fd.name,
                     description: fd.description,
                     parameters: fd.parameters,
-                })),
+                })) as SdkFunctionDeclaration[],
             });
         }
 
@@ -136,8 +136,8 @@ export async function generateContent(
         if (groundingMeta) {
             console.log('[GeminiService] Grounding Metadata found:', groundingMeta);
             output.groundingMetadata = {
-                searchEntryPoint: groundingMeta.searchEntryPoint,
-                groundingChunks: groundingMeta.groundingChunks,
+                searchEntryPoint: groundingMeta.searchEntryPoint as { renderedContent: string } | undefined,
+                groundingChunks: groundingMeta.groundingChunks as Array<{ web?: { uri: string; title: string } }> | undefined,
             };
         } else {
             console.log('[GeminiService] No Grounding Metadata found in response');
@@ -172,7 +172,7 @@ export function createChatSession(
                 name: fd.name,
                 description: fd.description,
                 parameters: fd.parameters,
-            })),
+            })) as SdkFunctionDeclaration[],
         });
     }
 

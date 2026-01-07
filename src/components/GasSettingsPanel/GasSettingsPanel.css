@@ -1,0 +1,217 @@
+/* GAS Settings Panel Styles */
+
+.gas-settings-panel {
+  padding: 16px;
+  background: var(--bg-secondary, #1e1f22);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #2d2f34);
+}
+
+.gas-settings-panel h3 {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+}
+
+.gas-status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--text-secondary, #b5bac1);
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.status-badge.synced {
+  background: rgba(67, 181, 129, 0.2);
+  color: #43b581;
+}
+
+.status-badge.syncing {
+  background: rgba(88, 101, 242, 0.2);
+  color: #5865f2;
+  animation: pulse 1s infinite;
+}
+
+.status-badge.out-of-sync {
+  background: rgba(250, 166, 26, 0.2);
+  color: #faa61a;
+}
+
+.status-badge.error {
+  background: rgba(240, 71, 71, 0.2);
+  color: #f04747;
+}
+
+.status-badge.not-configured {
+  background: rgba(128, 128, 144, 0.2);
+  color: #808090;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.gas-last-sync {
+  font-size: 11px;
+  color: var(--text-muted, #72767d);
+  margin-bottom: 12px;
+}
+
+.gas-form-group {
+  margin-bottom: 12px;
+}
+
+.gas-form-group label {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary, #b5bac1);
+  margin-bottom: 4px;
+}
+
+.gas-form-group input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-tertiary, #2b2d31);
+  border: 1px solid var(--border-color, #3d3f45);
+  border-radius: 4px;
+  color: var(--text-primary, #fff);
+  font-size: 13px;
+}
+
+.gas-form-group input:focus {
+  outline: none;
+  border-color: #5865f2;
+}
+
+.gas-form-group input::placeholder {
+  color: var(--text-muted, #72767d);
+}
+
+.gas-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.gas-btn {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.gas-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gas-btn.test {
+  background: var(--bg-tertiary, #2b2d31);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border-color, #3d3f45);
+}
+
+.gas-btn.test:hover:not(:disabled) {
+  background: var(--bg-hover, #36373d);
+}
+
+.gas-btn.sync {
+  background: #5865f2;
+  color: white;
+}
+
+.gas-btn.sync:hover:not(:disabled) {
+  background: #4752c4;
+}
+
+.gas-btn.deploy {
+  background: linear-gradient(135deg, #43b581, #3ca374);
+  color: white;
+}
+
+.gas-btn.deploy:hover:not(:disabled) {
+  background: linear-gradient(135deg, #3ca374, #359966);
+}
+
+.gas-message {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.gas-message.success {
+  background: rgba(67, 181, 129, 0.15);
+  color: #43b581;
+  border: 1px solid rgba(67, 181, 129, 0.3);
+}
+
+.gas-message.error {
+  background: rgba(240, 71, 71, 0.15);
+  color: #f04747;
+  border: 1px solid rgba(240, 71, 71, 0.3);
+}
+
+.gas-project-info {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #3d3f45);
+}
+
+.gas-project-info small {
+  color: var(--text-muted, #72767d);
+  font-size: 11px;
+  word-break: break-all;
+}
+
+/* Compact mode for toolbar */
+.gas-settings-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-secondary, #1e1f22);
+  border-radius: 6px;
+}
+
+.gas-btn-small {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: var(--bg-tertiary, #2b2d31);
+  color: var(--text-primary, #fff);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.gas-btn-small:hover:not(:disabled) {
+  background: var(--bg-hover, #36373d);
+}
+
+.gas-btn-small:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
