@@ -1,0 +1,280 @@
+/* GAS Project Manager Styles */
+
+.gas-project-manager {
+    padding: 16px;
+    background: var(--bg-secondary, #1e1f22);
+    border-radius: 8px;
+    border: 1px solid var(--border-color, #2d2f34);
+}
+
+.gas-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.gas-header h3 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+}
+
+.gas-project-manager h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: var(--text-primary, #fff);
+}
+
+.gas-warning {
+    padding: 12px;
+    background: rgba(250, 166, 26, 0.1);
+    border: 1px solid #faa61a;
+    border-radius: 6px;
+    color: #faa61a;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.gas-login-btn {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #4285f4;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gas-login-btn:hover:not(:disabled) {
+    background: #3367d6;
+}
+
+.gas-login-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.gas-logout-btn {
+    padding: 4px 8px;
+    border: 1px solid var(--border-color, #3d3f45);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary, #b5bac1);
+    font-size: 11px;
+    cursor: pointer;
+}
+
+.gas-logout-btn:hover {
+    background: rgba(240, 71, 71, 0.1);
+    border-color: #f04747;
+    color: #f04747;
+}
+
+.gas-error {
+    padding: 10px 12px;
+    background: rgba(240, 71, 71, 0.15);
+    border: 1px solid rgba(240, 71, 71, 0.3);
+    border-radius: 6px;
+    color: #f04747;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.gas-success {
+    padding: 10px 12px;
+    background: rgba(67, 181, 129, 0.15);
+    border: 1px solid rgba(67, 181, 129, 0.3);
+    border-radius: 6px;
+    color: #43b581;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.gas-section {
+    margin-bottom: 16px;
+}
+
+.gas-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-secondary, #b5bac1);
+}
+
+.gas-refresh-btn {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-secondary, #b5bac1);
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.gas-refresh-btn:hover:not(:disabled) {
+    background: var(--bg-tertiary, #2b2d31);
+}
+
+.gas-loading,
+.gas-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted, #72767d);
+    font-size: 12px;
+    background: var(--bg-tertiary, #2b2d31);
+    border-radius: 6px;
+}
+
+.gas-project-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #3d3f45);
+    border-radius: 6px;
+}
+
+.gas-project-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border-color, #3d3f45);
+}
+
+.gas-project-item:last-child {
+    border-bottom: none;
+}
+
+.gas-project-item:hover {
+    background: var(--bg-tertiary, #2b2d31);
+}
+
+.gas-project-item.selected {
+    background: rgba(88, 101, 242, 0.15);
+    border-left: 3px solid #5865f2;
+}
+
+.gas-project-item .project-name {
+    font-size: 13px;
+    color: var(--text-primary, #fff);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.gas-project-item .project-date {
+    font-size: 11px;
+    color: var(--text-muted, #72767d);
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+.gas-project-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.gas-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.gas-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.gas-btn.load {
+    background: var(--bg-tertiary, #2b2d31);
+    color: var(--text-primary, #fff);
+    border: 1px solid var(--border-color, #3d3f45);
+}
+
+.gas-btn.load:hover:not(:disabled) {
+    background: var(--bg-hover, #36373d);
+}
+
+.gas-btn.save {
+    background: #5865f2;
+    color: white;
+}
+
+.gas-btn.save:hover:not(:disabled) {
+    background: #4752c4;
+}
+
+.gas-btn.create {
+    background: linear-gradient(135deg, #43b581, #3ca374);
+    color: white;
+    flex: none;
+    padding: 8px 16px;
+}
+
+.gas-btn.create:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3ca374, #359966);
+}
+
+.gas-btn.delete {
+    background: transparent;
+    color: #f04747;
+    border: 1px solid #f04747;
+    flex: none;
+    padding: 8px 12px;
+}
+
+.gas-btn.delete:hover:not(:disabled) {
+    background: rgba(240, 71, 71, 0.15);
+}
+
+.gas-current-workflow {
+    padding: 8px 12px;
+    background: var(--bg-tertiary, #2b2d31);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-secondary, #b5bac1);
+    margin-bottom: 8px;
+}
+
+.gas-current-workflow strong {
+    color: var(--text-primary, #fff);
+}
+
+.gas-create-form {
+    display: flex;
+    gap: 8px;
+}
+
+.gas-create-form input {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg-tertiary, #2b2d31);
+    border: 1px solid var(--border-color, #3d3f45);
+    border-radius: 6px;
+    color: var(--text-primary, #fff);
+    font-size: 13px;
+}
+
+.gas-create-form input:focus {
+    outline: none;
+    border-color: #5865f2;
+}
+
+.gas-create-form input::placeholder {
+    color: var(--text-muted, #72767d);
+}

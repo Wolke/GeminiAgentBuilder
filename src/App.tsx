@@ -1,7 +1,7 @@
 // Main App Component
 
 import { ReactFlowProvider } from '@xyflow/react';
-import { NodeCanvas, Toolbar, PropertiesPanel } from './components';
+import { NodeCanvas, Toolbar, PropertiesPanel, GasProjectManager } from './components';
 import { ChatPanel } from './components/ChatPanel';
 import { useWorkflowStore } from './stores';
 import './App.css';
@@ -46,7 +46,12 @@ function App() {
           </div>
         </header>
         <main className="app-main">
-          {appMode === 'edit' && <Toolbar />}
+          {appMode === 'edit' && (
+            <div className="left-panel">
+              <Toolbar />
+              <GasProjectManager />
+            </div>
+          )}
           <NodeCanvas />
           {appMode === 'edit' ? <PropertiesPanel /> : <ChatPanel />}
         </main>

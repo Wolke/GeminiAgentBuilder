@@ -19,6 +19,32 @@ export type GasSyncStatus =
     | 'error';
 
 /**
+ * GAS OAuth 登入狀態
+ */
+export interface GasAuthState {
+    isLoggedIn: boolean;
+    accessToken: string | null;
+    expiresAt: number | null;
+    userEmail?: string;
+}
+
+/**
+ * GAS 專案資訊
+ */
+export interface GasProject {
+    scriptId: string;
+    title: string;
+    createTime?: string;
+    updateTime?: string;
+}
+
+export const DEFAULT_GAS_AUTH_STATE: GasAuthState = {
+    isLoggedIn: false,
+    accessToken: null,
+    expiresAt: null,
+};
+
+/**
  * GAS API response wrapper
  */
 export interface GasResponse<T = unknown> {

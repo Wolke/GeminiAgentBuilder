@@ -100,6 +100,17 @@ body {
   overflow: hidden;
 }
 
+/* Left Panel - Toolbar + GAS Manager */
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid #2d2d40;
+  background: #141420;
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;

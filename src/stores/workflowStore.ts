@@ -17,6 +17,8 @@ import {
     MemoryNodeData,
     GasConfig,
     DEFAULT_GAS_CONFIG,
+    GasAuthState,
+    DEFAULT_GAS_AUTH_STATE,
 } from '../types';
 import {
     addEdge,
@@ -107,6 +109,9 @@ interface WorkflowState {
     // GAS configuration
     gasConfig: GasConfig;
 
+    // GAS auth state
+    gasAuth: GasAuthState;
+
     // Actions
     onNodesChange: (changes: NodeChange<WorkflowNode>[]) => void;
     onEdgesChange: (changes: EdgeChange<WorkflowEdge>[]) => void;
@@ -141,6 +146,11 @@ interface WorkflowState {
     updateGasConfig: (config: Partial<GasConfig>) => void;
     setGasSyncStatus: (status: GasConfig['syncStatus']) => void;
     exportWorkflow: () => Workflow;
+
+    // GAS auth actions
+    setGasAuth: (auth: Partial<GasAuthState>) => void;
+    gasLogout: () => void;
+    loadWorkflowFromGas: (workflow: Workflow) => void;
 }
 
 const initialExecution: ExecutionContext = {
@@ -172,6 +182,7 @@ export const useWorkflowStore = create<WorkflowState>()(
             appMode: 'edit' as AppMode,
             chatMessages: [],
             gasConfig: DEFAULT_GAS_CONFIG,
+            gasAuth: DEFAULT_GAS_AUTH_STATE,
 
             onNodesChange: (changes) => {
                 set({
@@ -352,6 +363,30 @@ export const useWorkflowStore = create<WorkflowState>()(
                     createdAt: now,
                     updatedAt: now,
                 };
+            },
+
+            // GAS auth actions
+            setGasAuth: (auth) => {
+                set({
+                    gasAuth: { ...get().gasAuth, ...auth },
+                });
+            },
+
+            gasLogout: () => {
+                set({
+                    gasAuth: DEFAULT_GAS_AUTH_STATE,
+                });
+            },
+
+            loadWorkflowFromGas: (workflow) => {
+                set({
+                    nodes: workflow.nodes,
+                    edges: workflow.edges,
+                    workflowName: workflow.name,
+                    workflowDescription: workflow.description || '',
+                    selectedNodeId: null,
+                    execution: initialExecution,
+                });
             },
         }),
         {
