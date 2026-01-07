@@ -28,9 +28,11 @@ export function GasProjectManager() {
     const [selectedProject, setSelectedProject] = useState<GasProject | null>(null);
     const [newProjectName, setNewProjectName] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState<string | null>(null);
     const [isLoggingIn, setIsLoggingIn] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const [webAppUrl, setWebAppUrl] = useState<string | null>(null);
 
     // Check token expiration
     const isTokenValid = gasAuth.isLoggedIn &&
@@ -98,7 +100,19 @@ export function GasProjectManager() {
         if (!selectedProject || !gasAuth.accessToken) return;
 
         setIsLoading(true);
+        setLoadingMessage('Loading workflow...');
         setError(null);
+
+        // Clear canvas first
+        loadWorkflowFromGas({
+            id: '',
+            name: 'Loading...',
+            description: '',
+            nodes: [],
+            edges: [],
+            createdAt: '',
+            updatedAt: '',
+        });
 
         try {
             const workflow = await gasDeployService.getWorkflowFromProject(
@@ -117,6 +131,7 @@ export function GasProjectManager() {
             setError(err instanceof Error ? err.message : 'Failed to load workflow');
         } finally {
             setIsLoading(false);
+            setLoadingMessage(null);
         }
     };
 
@@ -125,10 +140,13 @@ export function GasProjectManager() {
         if (!selectedProject || !gasAuth.accessToken) return;
 
         setIsLoading(true);
+        setLoadingMessage('Saving workflow...');
         setError(null);
 
         try {
             const workflow = exportWorkflow();
+            // Update workflow name to match project name
+            workflow.name = selectedProject.title.replace(/^G8N[-_]?/i, '') || workflow.name;
             await gasDeployService.saveWorkflowToProject(
                 selectedProject.scriptId,
                 workflow,
@@ -140,6 +158,7 @@ export function GasProjectManager() {
             setError(err instanceof Error ? err.message : 'Failed to save');
         } finally {
             setIsLoading(false);
+            setLoadingMessage(null);
         }
     };
 
@@ -148,6 +167,7 @@ export function GasProjectManager() {
         if (!newProjectName.trim() || !gasAuth.accessToken) return;
 
         setIsLoading(true);
+        setLoadingMessage('Creating project...');
         setError(null);
 
         try {
@@ -167,6 +187,7 @@ export function GasProjectManager() {
             setError(err instanceof Error ? err.message : 'Failed to create project');
         } finally {
             setIsLoading(false);
+            setLoadingMessage(null);
         }
     };
 
@@ -199,6 +220,57 @@ export function GasProjectManager() {
         }
     };
 
+    // Sync All (backend code + workflow)
+    const handleSyncAll = async () => {
+        if (!selectedProject || !gasAuth.accessToken) return;
+
+        setIsLoading(true);
+        setLoadingMessage('Syncing code + workflow...');
+        setError(null);
+
+        try {
+            const workflow = exportWorkflow();
+            // Update workflow name to match project name
+            workflow.name = selectedProject.title.replace(/^G8N[-_]?/i, '') || workflow.name;
+            await gasDeployService.syncAll(
+                selectedProject.scriptId,
+                workflow,
+                gasAuth.accessToken
+            );
+            setSuccessMessage('Synced code + workflow!');
+            setTimeout(() => setSuccessMessage(null), 3000);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Sync failed');
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
+        }
+    };
+
+    // Deploy as Web App
+    const handleDeploy = async () => {
+        if (!selectedProject || !gasAuth.accessToken) return;
+
+        setIsLoading(true);
+        setLoadingMessage('Deploying Web App...');
+        setError(null);
+
+        try {
+            const deployment = await gasDeployService.deployProject(
+                selectedProject.scriptId,
+                gasAuth.accessToken
+            );
+            setWebAppUrl(deployment.webAppUrl);
+            setSuccessMessage(`Deployed v${deployment.version}!`);
+            setTimeout(() => setSuccessMessage(null), 5000);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Deploy failed');
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
+        }
+    };
+
     // Not logged in view
     if (!isTokenValid) {
         return (
@@ -227,6 +299,14 @@ export function GasProjectManager() {
     // Logged in view
     return (
         <div className="gas-project-manager">
+            {/* Loading Overlay */}
+            {loadingMessage && (
+                <div className="gas-loading-overlay">
+                    <div className="gas-loading-spinner"></div>
+                    <div className="gas-loading-text">{loadingMessage}</div>
+                </div>
+            )}
+
             <div className="gas-header">
                 <h3>☁️ GAS Project Manager</h3>
                 <button className="gas-logout-btn" onClick={handleLogout}>
@@ -297,6 +377,36 @@ export function GasProjectManager() {
                         >
                             🗑️
                         </button>
+                    </div>
+                )}
+
+                {selectedProject && (
+                    <div className="gas-project-actions">
+                        <button
+                            className="gas-btn sync-all"
+                            onClick={handleSyncAll}
+                            disabled={isLoading}
+                            title="Sync backend code + workflow"
+                        >
+                            🔄 Sync All
+                        </button>
+                        <button
+                            className="gas-btn deploy"
+                            onClick={handleDeploy}
+                            disabled={isLoading}
+                            title="Deploy as Web App"
+                        >
+                            🚀 Deploy
+                        </button>
+                    </div>
+                )}
+
+                {webAppUrl && (
+                    <div className="gas-webapp-url">
+                        <span>🌐 Web App:</span>
+                        <a href={webAppUrl} target="_blank" rel="noopener noreferrer">
+                            {webAppUrl.slice(0, 50)}...
+                        </a>
                     </div>
                 )}
             </div>

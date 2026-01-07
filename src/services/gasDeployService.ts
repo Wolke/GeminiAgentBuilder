@@ -7,9 +7,28 @@ import type { Workflow } from '../types/nodes';
 import CodeJs from '../gas/Code.js?raw';
 import RouterJs from '../gas/Router.js?raw';
 import EngineJs from '../gas/Engine.js?raw';
-import AppsScriptJson from '../gas/appsscript.json?raw';
 
 const APPS_SCRIPT_API_BASE = 'https://script.googleapis.com/v1';
+
+// Generate appsscript.json content dynamically to avoid import issues
+const APPSSCRIPT_MANIFEST = JSON.stringify({
+    timeZone: 'Asia/Taipei',
+    dependencies: {},
+    exceptionLogging: 'STACKDRIVER',
+    runtimeVersion: 'V8',
+    oauthScopes: [
+        'https://www.googleapis.com/auth/calendar',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/gmail.send',
+        'https://www.googleapis.com/auth/gmail.readonly',
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/script.external_request'
+    ],
+    webapp: {
+        executeAs: 'USER_DEPLOYING',
+        access: 'ANYONE_ANONYMOUS'
+    }
+}, null, 2);
 
 /**
  * GAS Deploy Service
@@ -24,7 +43,7 @@ export const gasDeployService = {
             { name: 'Code', type: 'SERVER_JS', source: CodeJs },
             { name: 'Router', type: 'SERVER_JS', source: RouterJs },
             { name: 'Engine', type: 'SERVER_JS', source: EngineJs },
-            { name: 'appsscript', type: 'JSON', source: AppsScriptJson },
+            { name: 'appsscript', type: 'JSON', source: APPSSCRIPT_MANIFEST },
         ];
     },
 
@@ -64,6 +83,16 @@ export const gasDeployService = {
         files: AppsScriptFile[],
         accessToken: string
     ): Promise<void> {
+        const payload = {
+            files: files.map(f => ({
+                name: f.name,
+                type: f.type,
+                source: f.source,
+            })),
+        };
+
+        console.log('[GasDeployService] Pushing files:', payload.files.map(f => ({ name: f.name, type: f.type, sourceLength: f.source.length })));
+
         const response = await fetch(
             `${APPS_SCRIPT_API_BASE}/projects/${scriptId}/content`,
             {
@@ -72,19 +101,14 @@ export const gasDeployService = {
                     'Authorization': `Bearer ${accessToken}`,
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    files: files.map(f => ({
-                        name: f.name,
-                        type: f.type,
-                        source: f.source,
-                    })),
-                }),
+                body: JSON.stringify(payload),
             }
         );
 
         if (!response.ok) {
             const error = await response.json();
-            throw new Error(error.error?.message || 'Failed to push files');
+            console.error('[GasDeployService] pushFiles error:', error);
+            throw new Error(error.error?.message || JSON.stringify(error) || 'Failed to push files');
         }
     },
 
@@ -126,12 +150,6 @@ export const gasDeployService = {
         accessToken: string,
         existingDeploymentId?: string
     ): Promise<AppsScriptDeployment> {
-        const deploymentConfig = {
-            versionNumber,
-            manifestFileName: 'appsscript',
-            description: `G8N Deployment v${versionNumber}`,
-        };
-
         let response: Response;
 
         if (existingDeploymentId) {
@@ -144,11 +162,17 @@ export const gasDeployService = {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ deploymentConfig }),
+                    body: JSON.stringify({
+                        deploymentConfig: {
+                            versionNumber,
+                            manifestFileName: 'appsscript',
+                            description: `G8N Deployment v${versionNumber}`,
+                        },
+                    }),
                 }
             );
         } else {
-            // Create new deployment
+            // Create new deployment - different payload structure
             response = await fetch(
                 `${APPS_SCRIPT_API_BASE}/projects/${scriptId}/deployments`,
                 {
@@ -157,13 +181,18 @@ export const gasDeployService = {
                         'Authorization': `Bearer ${accessToken}`,
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ deploymentConfig }),
+                    body: JSON.stringify({
+                        versionNumber,
+                        manifestFileName: 'appsscript',
+                        description: `G8N Deployment v${versionNumber}`,
+                    }),
                 }
             );
         }
 
         if (!response.ok) {
             const error = await response.json();
+            console.error('[GasDeployService] deployWebApp error:', error);
             throw new Error(error.error?.message || 'Failed to deploy');
         }
 
@@ -322,47 +351,62 @@ export const gasDeployService = {
 
     /**
      * Get workflow from a G8N project
-     * Reads WorkflowData.gs and extracts WORKFLOW_DATA
+     * Reads G8nWorkflow.gs or WorkflowData.gs and extracts workflow data
      */
     async getWorkflowFromProject(
         scriptId: string,
         accessToken: string
     ): Promise<Workflow | null> {
         const files = await this.getProjectContent(scriptId, accessToken);
-        const workflowFile = files.find(f => f.name === 'WorkflowData');
+
+        // Try both file names (G8nWorkflow is the new format, WorkflowData is legacy)
+        const workflowFile = files.find(f => f.name === 'G8nWorkflow')
+            || files.find(f => f.name === 'WorkflowData');
 
         if (!workflowFile) {
+            console.log('[GasDeployService] No workflow file found. Files:', files.map(f => f.name));
             return null;
         }
 
-        // Extract JSON from: const WORKFLOW_DATA = {...};
-        const match = workflowFile.source.match(/const\s+WORKFLOW_DATA\s*=\s*(\{[\s\S]*\});/);
-        if (!match) {
-            return null;
+        console.log('[GasDeployService] Found workflow file:', workflowFile.name);
+
+        // Try to extract JSON from either format
+        // Format 1: const WORKFLOW_DATA = {...};
+        // Format 2: var G8N_WORKFLOW = {...};
+        const patterns = [
+            /const\s+WORKFLOW_DATA\s*=\s*(\{[\s\S]*\});/,
+            /var\s+G8N_WORKFLOW\s*=\s*(\{[\s\S]*\});/,
+        ];
+
+        for (const pattern of patterns) {
+            const match = workflowFile.source.match(pattern);
+            if (match) {
+                try {
+                    const workflow = JSON.parse(match[1]) as Workflow;
+                    console.log('[GasDeployService] Parsed workflow:', workflow.name);
+                    return workflow;
+                } catch (e) {
+                    console.error('[GasDeployService] Failed to parse workflow data:', e);
+                }
+            }
         }
 
-        try {
-            return JSON.parse(match[1]) as Workflow;
-        } catch {
-            console.error('Failed to parse workflow data');
-            return null;
-        }
+        console.log('[GasDeployService] No matching pattern found in workflow file');
+        return null;
     },
 
     /**
-     * Generate WorkflowData.gs content
+     * Generate G8nWorkflow.gs content (follows G8N naming convention)
      */
     generateWorkflowDataFile(workflow: Workflow): string {
         const json = JSON.stringify(workflow, null, 2);
-        return `/**
- * G8N Workflow Data
- * Generated by Gemini Agent Builder
- * Updated: ${new Date().toISOString()}
- */
-const WORKFLOW_DATA = ${json};
+        return `// G8N Workflow Data - Auto-generated, do not edit manually
+// Generated by Gemini Agent Builder
+// Updated: ${new Date().toISOString()}
+var G8N_WORKFLOW = ${json};
 
 function getWorkflow() {
-    return WORKFLOW_DATA;
+    return G8N_WORKFLOW;
 }
 `;
     },
@@ -378,15 +422,17 @@ function getWorkflow() {
         // Get existing files
         const existingFiles = await this.getProjectContent(scriptId, accessToken);
 
-        // Replace or add WorkflowData.gs
+        // Replace or add G8nWorkflow.gs (remove legacy WorkflowData if exists)
         const workflowDataContent = this.generateWorkflowDataFile(workflow);
         const workflowDataFile: AppsScriptFile = {
-            name: 'WorkflowData',
+            name: 'G8nWorkflow',
             type: 'SERVER_JS',
             source: workflowDataContent,
         };
 
-        const filesWithoutWorkflow = existingFiles.filter(f => f.name !== 'WorkflowData');
+        const filesWithoutWorkflow = existingFiles.filter(
+            f => f.name !== 'WorkflowData' && f.name !== 'G8nWorkflow'
+        );
         const newFiles = [...filesWithoutWorkflow, workflowDataFile];
 
         await this.pushFiles(scriptId, newFiles, accessToken);
@@ -445,5 +491,79 @@ function getWorkflow() {
             const error = await response.json();
             throw new Error(error.error?.message || 'Failed to delete project');
         }
+    },
+
+    // ============================================
+    // Sync & Deploy
+    // ============================================
+
+    /**
+     * Sync only backend code (Code.js + Router.js + Engine.js)
+     */
+    async syncBackendCode(
+        scriptId: string,
+        accessToken: string
+    ): Promise<void> {
+        const existingFiles = await this.getProjectContent(scriptId, accessToken);
+
+        // Keep workflow file if exists
+        const workflowFile = existingFiles.find(f => f.name === 'WorkflowData' || f.name === 'G8nWorkflow');
+
+        // Build new file list with backend code
+        const files = this.getGasFiles();
+        if (workflowFile) {
+            files.push(workflowFile);
+        }
+
+        await this.pushFiles(scriptId, files, accessToken);
+    },
+
+    /**
+     * Sync all: backend code + workflow
+     */
+    async syncAll(
+        scriptId: string,
+        workflow: Workflow,
+        accessToken: string
+    ): Promise<void> {
+        // Build file list with backend code + workflow
+        const files = this.getGasFiles();
+        files.push({
+            name: 'G8nWorkflow',
+            type: 'SERVER_JS',
+            source: this.generateWorkflowDataFile(workflow),
+        });
+
+        await this.pushFiles(scriptId, files, accessToken);
+    },
+
+    /**
+     * Deploy project as Web App
+     * Creates a new version and deployment
+     */
+    async deployProject(
+        scriptId: string,
+        accessToken: string
+    ): Promise<AppsScriptDeployment> {
+        // Step 1: Create a new version
+        const versionNumber = await this.createVersion(
+            scriptId,
+            `G8N Deploy ${new Date().toISOString()}`,
+            accessToken
+        );
+
+        // Step 2: Get existing deployments to check for Web App
+        const deployments = await this.listDeployments(scriptId, accessToken);
+        const existingWebApp = deployments.find(d => d.webAppUrl);
+
+        // Step 3: Create or update deployment
+        const deployment = await this.deployWebApp(
+            scriptId,
+            versionNumber,
+            accessToken,
+            existingWebApp?.deploymentId
+        );
+
+        return deployment;
     },
 };
