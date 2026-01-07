@@ -40,8 +40,18 @@ const WorkflowRunner = {
                 triggerMeta: triggerMeta,
                 conversationHistory: [],
                 variables: {},
-                currentOutput: input
+                currentOutput: input,
+                logs: [] // Capture execution logs
             };
+
+            // Helper to log to both console and context
+            context.logger = (message) => {
+                console.log(message);
+                context.logs.push(`[${new Date().toISOString().split('T')[1].slice(0, -1)}] ${message}`);
+            };
+
+            context.logger(`[WorkflowRunner] Starting execution with trigger: ${triggerType}`);
+            context.logger(`[WorkflowRunner] Input: ${input}`);
 
             // Execute from start node
             const result = this.executeFromNode(workflow, startNode.id, context);
@@ -49,7 +59,8 @@ const WorkflowRunner = {
             return {
                 success: true,
                 output: result.output,
-                executedNodes: result.executedNodes
+                executedNodes: result.executedNodes,
+                logs: context.logs
             };
 
         } catch (error) {
@@ -84,15 +95,19 @@ const WorkflowRunner = {
             const node = workflow.nodes.find(n => n.id === currentNodeId);
 
             if (!node) {
-                console.log(`[WorkflowRunner] Node not found: ${currentNodeId}`);
+                context.logger(`[WorkflowRunner] Node not found: ${currentNodeId}`);
                 break;
             }
 
-            console.log(`[WorkflowRunner] Executing node: ${node.data.label} (${node.type})`);
+            context.logger(`[WorkflowRunner] Executing node: ${node.data.label || node.type} (${node.type})`);
             executedNodes.push(node.id);
 
             // Execute node based on type
             const result = this.executeNode(node, context, workflow);
+
+            if (result.output !== undefined && typeof result.output !== 'object') {
+                context.logger(`[WorkflowRunner] Node Output: ${String(result.output).substring(0, 100)}${String(result.output).length > 100 ? '...' : ''}`);
+            }
 
             // Update context with output
             context.currentOutput = result.output;

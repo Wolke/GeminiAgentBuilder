@@ -291,6 +291,17 @@ export function PropertiesPanel() {
                                     }}>
                                         ✅ OAuth 已授權
                                     </div>
+                                    <div style={{
+                                        marginTop: '8px',
+                                        padding: '8px',
+                                        background: 'rgba(250, 166, 26, 0.1)',
+                                        border: '1px solid #faa61a',
+                                        borderRadius: '6px',
+                                        fontSize: '11px',
+                                        color: '#faa61a'
+                                    }}>
+                                        ⚠️ 此工具僅支援本地執行，無法在 GAS 上調用
+                                    </div>
                                 </div>
                             );
                         }
