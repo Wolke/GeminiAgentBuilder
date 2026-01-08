@@ -17,7 +17,9 @@ import type {
 import {
     GEMINI_BUILTIN_TOOLS,
     GCP_API_TOOLS,
+    GAS_NATIVE_TOOLS,
 } from '../../types';
+import type { GasNativeTool } from '../../types';
 import './PropertiesPanel.css';
 
 const GEMINI_MODELS_OPTIONS: { value: GeminiModel; label: string }[] = [
@@ -33,6 +35,7 @@ const TOOL_CATEGORY_OPTIONS: { value: ToolCategory; label: string; icon: string 
     { value: 'gemini_builtin', label: 'Gemini Built-in', icon: '✨' },
     { value: 'gcp_api', label: 'GCP API (OAuth)', icon: '☁️' },
     { value: 'custom_mcp', label: 'Custom / MCP', icon: '🔌' },
+    { value: 'gas_native', label: 'GAS Native', icon: '⚙️' },
 ];
 
 const TOOL_TYPE_BY_CATEGORY: Record<ToolCategory, { value: ToolType; label: string }[]> = {
@@ -53,6 +56,12 @@ const TOOL_TYPE_BY_CATEGORY: Record<ToolCategory, { value: ToolType; label: stri
     custom_mcp: [
         { value: 'mcp', label: '🔌 MCP Server' },
         { value: 'function_calling', label: '⚡ Function Calling' },
+    ],
+    gas_native: [
+        { value: 'gas_gmail', label: '📧 Gmail (MailApp)' },
+        { value: 'gas_calendar', label: '📆 Calendar' },
+        { value: 'gas_sheets', label: '📊 Sheets' },
+        { value: 'gas_drive', label: '💾 Drive' },
     ],
 };
 
@@ -202,6 +211,7 @@ export function PropertiesPanel() {
         const getCurrentCategory = (): ToolCategory => {
             if (GEMINI_BUILTIN_TOOLS.includes(data.toolType as any)) return 'gemini_builtin';
             if (GCP_API_TOOLS.includes(data.toolType as any)) return 'gcp_api';
+            if (GAS_NATIVE_TOOLS.includes(data.toolType as GasNativeTool)) return 'gas_native';
             return 'custom_mcp';
         };
 
@@ -440,6 +450,103 @@ export function PropertiesPanel() {
                             placeholder="https://..."
                         />
                     </div>
+                )}
+
+                {/* GAS Native Tool Status */}
+                {GAS_NATIVE_TOOLS.includes(data.toolType as GasNativeTool) && (() => {
+                    const hasWebAppUrl = !!settings.gasWebAppUrl;
+
+                    if (hasWebAppUrl) {
+                        return (
+                            <div className="prop-group">
+                                <div style={{
+                                    padding: '8px',
+                                    background: 'rgba(52, 168, 83, 0.1)',
+                                    border: '1px solid #34a853',
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    color: '#34a853'
+                                }}>
+                                    ✅ Ready - Will call GAS Web App for local testing
+                                </div>
+                            </div>
+                        );
+                    }
+
+                    return (
+                        <div className="prop-group">
+                            <div style={{
+                                padding: '12px',
+                                background: 'rgba(250, 166, 26, 0.1)',
+                                border: '1px solid #faa61a',
+                                borderRadius: '6px',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ color: '#faa61a', marginBottom: '4px', fontSize: '12px' }}>
+                                    ⚠️ Deploy Required for Local Testing
+                                </div>
+                                <div style={{ color: '#888', fontSize: '11px' }}>
+                                    GAS native tools require a deployed Web App to test locally.
+                                    Use GAS Project Manager → Deploy first.
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })()}
+
+                {/* GAS Gmail Configuration */}
+                {data.toolType === 'gas_gmail' && (
+                    <>
+                        <div className="prop-group">
+                            <label>Action</label>
+                            <select
+                                value={data.config?.action || 'send'}
+                                onChange={(e) => handleUpdate({
+                                    config: { ...data.config, action: e.target.value }
+                                })}
+                            >
+                                <option value="send">Send Email</option>
+                                <option value="get_quota">Get Remaining Quota</option>
+                            </select>
+                        </div>
+                        {(data.config?.action === 'send' || !data.config?.action) && (
+                            <>
+                                <div className="prop-group">
+                                    <label>To</label>
+                                    <input
+                                        type="email"
+                                        value={data.config?.to || ''}
+                                        onChange={(e) => handleUpdate({
+                                            config: { ...data.config, to: e.target.value }
+                                        })}
+                                        placeholder="recipient@example.com"
+                                    />
+                                </div>
+                                <div className="prop-group">
+                                    <label>Subject</label>
+                                    <input
+                                        type="text"
+                                        value={data.config?.subject || ''}
+                                        onChange={(e) => handleUpdate({
+                                            config: { ...data.config, subject: e.target.value }
+                                        })}
+                                        placeholder="Email subject"
+                                    />
+                                </div>
+                                <div className="prop-group">
+                                    <label>Body</label>
+                                    <textarea
+                                        value={data.config?.body || ''}
+                                        onChange={(e) => handleUpdate({
+                                            config: { ...data.config, body: e.target.value }
+                                        })}
+                                        rows={4}
+                                        placeholder="Email content..."
+                                    />
+                                </div>
+                            </>
+                        )}
+                    </>
                 )}
             </>
         );

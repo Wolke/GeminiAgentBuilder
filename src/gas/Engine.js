@@ -44,12 +44,16 @@ const Engine = {
     executeTool(toolType, config) {
         switch (toolType) {
             case 'calendar':
+            case 'gas_calendar':
                 return Tools.calendar(config);
             case 'sheets':
+            case 'gas_sheets':
                 return Tools.sheets(config);
             case 'gmail':
+            case 'gas_gmail':
                 return Tools.gmail(config);
             case 'drive':
+            case 'gas_drive':
                 return Tools.drive(config);
             default:
                 throw new Error(`Tool type not supported in GAS: ${toolType}`);

@@ -83,4 +83,7 @@ export interface AppSettings {
     gcpApiKey: string;    // API Key for GCP services (Places API, etc.)
     defaultModel: string;
     theme: 'dark' | 'light';
+    // GAS Native Tools
+    gasWebAppUrl?: string;  // Web App URL for local GAS tool testing
+    gasApiToken?: string;   // Optional API token for GAS authentication
 }

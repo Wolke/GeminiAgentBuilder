@@ -1,7 +1,7 @@
 import { Handle, Position } from '@xyflow/react';
 import type { NodeProps } from '@xyflow/react';
 import type { ToolNodeData, ToolType, ToolCategory } from '../../types';
-import { GEMINI_BUILTIN_TOOLS, GCP_API_TOOLS } from '../../types';
+import { GEMINI_BUILTIN_TOOLS, GCP_API_TOOLS, GAS_NATIVE_TOOLS } from '../../types';
 import './nodes.css';
 
 const toolIcons: Record<ToolType, string> = {
@@ -20,6 +20,11 @@ const toolIcons: Record<ToolType, string> = {
     // Custom MCP
     mcp: '🔌',
     function_calling: '⚡',
+    // GAS Native
+    gas_gmail: '📧',
+    gas_calendar: '📆',
+    gas_sheets: '📊',
+    gas_drive: '💾',
 };
 
 const toolLabels: Record<ToolType, string> = {
@@ -38,11 +43,17 @@ const toolLabels: Record<ToolType, string> = {
     // Custom MCP
     mcp: 'MCP Server',
     function_calling: 'Function Call',
+    // GAS Native
+    gas_gmail: 'GAS Gmail',
+    gas_calendar: 'GAS Calendar',
+    gas_sheets: 'GAS Sheets',
+    gas_drive: 'GAS Drive',
 };
 
 const getToolCategory = (toolType: ToolType): ToolCategory => {
     if (GEMINI_BUILTIN_TOOLS.includes(toolType as any)) return 'gemini_builtin';
     if (GCP_API_TOOLS.includes(toolType as any)) return 'gcp_api';
+    if (GAS_NATIVE_TOOLS.includes(toolType as any)) return 'gas_native';
     return 'custom_mcp';
 };
 
@@ -50,6 +61,7 @@ const categoryStyles: Record<ToolCategory, { bg: string; label: string }> = {
     gemini_builtin: { bg: 'rgba(88, 101, 242, 0.15)', label: '✨ Gemini' },
     gcp_api: { bg: 'rgba(66, 133, 244, 0.15)', label: '☁️ GCP' },
     custom_mcp: { bg: 'rgba(250, 166, 26, 0.15)', label: '🔌 Custom' },
+    gas_native: { bg: 'rgba(52, 168, 83, 0.15)', label: '⚙️ GAS' },
 };
 
 export function ToolNode({ data, selected }: NodeProps) {

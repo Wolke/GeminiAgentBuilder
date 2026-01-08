@@ -3,7 +3,8 @@
 import { useWorkflowStore } from '../stores/workflowStore';
 import { generateContent, initializeGemini } from './geminiService';
 import { getGcpFunctionDeclarations, executeGcpFunction } from './gcpApiExecutor';
-import { GCP_API_TOOLS } from '../types/nodes';
+import { gasToolExecutor } from './gasToolExecutor';
+import { GCP_API_TOOLS, GAS_NATIVE_TOOLS } from '../types/nodes';
 import type {
     WorkflowNode,
     ExecutionStep,
@@ -13,7 +14,8 @@ import type {
     ToolNodeData,
     OutputNodeData,
     MemoryNodeData,
-    GcpApiTool
+    GcpApiTool,
+    GasNativeTool
 } from '../types';
 
 export class WorkflowEngine {
@@ -300,6 +302,26 @@ export class WorkflowEngine {
 
             case 'tool': {
                 const toolData = data as ToolNodeData;
+
+                // Check if it's a GAS Native tool
+                if (GAS_NATIVE_TOOLS.includes(toolData.toolType as GasNativeTool)) {
+                    const { settings } = useWorkflowStore.getState();
+                    const gasConfig = {
+                        webAppUrl: settings.gasWebAppUrl || '',
+                        apiToken: settings.gasApiToken,
+                    };
+
+                    try {
+                        const result = await gasToolExecutor.execute(
+                            toolData.toolType as GasNativeTool,
+                            { ...toolData.config, input: variables['last_output'] },
+                            gasConfig
+                        );
+                        return result;
+                    } catch (error: any) {
+                        return { error: true, message: error.message };
+                    }
+                }
 
                 // For tools like Google Maps or Search, they are often executed AS PART of an Agent node.
                 // However, if this is a standalone Tool node meant to output to an Agent...

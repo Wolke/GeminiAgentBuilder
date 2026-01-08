@@ -57,7 +57,7 @@ export interface ToolNodeData extends BaseNodeData {
 }
 
 // Tool Categories
-export type ToolCategory = 'gemini_builtin' | 'gcp_api' | 'custom_mcp';
+export type ToolCategory = 'gemini_builtin' | 'gcp_api' | 'custom_mcp' | 'gas_native';
 
 // Category 1: Gemini Built-in Tools (Supported explicitly by Gemini API)
 export type GeminiBuiltinTool =
@@ -80,8 +80,15 @@ export type CustomMcpTool =
   | 'mcp'
   | 'function_calling';
 
+// Category 4: GAS Native Tools (GAS-only APIs, requires Web App for local testing)
+export type GasNativeTool =
+  | 'gas_gmail'      // MailApp / GmailApp
+  | 'gas_calendar'   // CalendarApp
+  | 'gas_sheets'     // SpreadsheetApp
+  | 'gas_drive';     // DriveApp
+
 // Union of all tool types
-export type ToolType = GeminiBuiltinTool | GcpApiTool | CustomMcpTool;
+export type ToolType = GeminiBuiltinTool | GcpApiTool | CustomMcpTool | GasNativeTool;
 
 // Runtime constants for tool categories
 export const GEMINI_BUILTIN_TOOLS: GeminiBuiltinTool[] = [
@@ -105,11 +112,19 @@ export const CUSTOM_MCP_TOOLS: CustomMcpTool[] = [
   'function_calling',
 ];
 
+export const GAS_NATIVE_TOOLS: GasNativeTool[] = [
+  'gas_gmail',
+  'gas_calendar',
+  'gas_sheets',
+  'gas_drive',
+];
+
 // All tools combined (for backward compatibility)
 export const TOOL_TYPES: ToolType[] = [
   ...GEMINI_BUILTIN_TOOLS,
   ...GCP_API_TOOLS,
   ...CUSTOM_MCP_TOOLS,
+  ...GAS_NATIVE_TOOLS,
 ];
 
 export interface ToolConfig {
@@ -129,6 +144,38 @@ export interface ToolConfig {
 
   // MCP
   mcpServerUrl?: string;
+
+  // GAS Native Tools - Common
+  action?: string;
+
+  // GAS Gmail (gas_gmail)
+  to?: string;
+  subject?: string;
+  body?: string;
+  htmlBody?: string;
+  cc?: string;
+  bcc?: string;
+
+  // GAS Calendar (gas_calendar)
+  calendarId?: string;
+  eventId?: string;
+  title?: string;
+  startTime?: string;
+  endTime?: string;
+  description?: string;
+  daysAhead?: number;
+
+  // GAS Sheets (gas_sheets)
+  spreadsheetId?: string;
+  sheetName?: string;
+  range?: string;
+  values?: unknown;
+
+  // GAS Drive (gas_drive)
+  query?: string;
+  fileName?: string;
+  content?: string;
+  folderId?: string;
 }
 
 export interface FunctionParameter {
