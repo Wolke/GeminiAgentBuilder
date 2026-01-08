@@ -388,6 +388,22 @@ export const gasDeployService = {
                 try {
                     const workflow = JSON.parse(match[1]) as Workflow;
                     console.log('[GasDeployService] Parsed workflow:', workflow.name);
+
+                    // Attach GAS project info to workflow
+                    workflow.gasProjectId = scriptId;
+
+                    // Try to get the latest web app URL
+                    try {
+                        const deployments = await this.listDeployments(scriptId, accessToken);
+                        const latestDeployment = deployments.find(d => d.webAppUrl);
+                        if (latestDeployment) {
+                            workflow.gasWebAppUrl = latestDeployment.webAppUrl;
+                            console.log('[GasDeployService] Attached webAppUrl:', latestDeployment.webAppUrl);
+                        }
+                    } catch (e) {
+                        console.warn('[GasDeployService] Could not fetch deployment URL:', e);
+                    }
+
                     return workflow;
                 } catch (e) {
                     console.error('[GasDeployService] Failed to parse workflow data:', e);

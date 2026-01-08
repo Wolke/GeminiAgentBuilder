@@ -234,6 +234,9 @@ export interface Workflow {
   edges: WorkflowEdge[];
   createdAt: string;
   updatedAt: string;
+  // GAS deployment info
+  gasWebAppUrl?: string;
+  gasProjectId?: string;
 }
 
 // Execution context

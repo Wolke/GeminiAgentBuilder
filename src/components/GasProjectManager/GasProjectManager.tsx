@@ -123,6 +123,17 @@ export function GasProjectManager() {
 
             if (workflow) {
                 loadWorkflowFromGas(workflow);
+
+                // Auto-update gasConfig with workflow's GAS info
+                if (workflow.gasWebAppUrl) {
+                    updateGasConfig({
+                        webAppUrl: workflow.gasWebAppUrl,
+                        projectId: workflow.gasProjectId || selectedProject.scriptId,
+                        syncStatus: 'synced',
+                    });
+                    setWebAppUrl(workflow.gasWebAppUrl);
+                }
+
                 setSuccessMessage(`Loaded: ${workflow.name}`);
                 setTimeout(() => setSuccessMessage(null), 3000);
             } else {
@@ -148,6 +159,11 @@ export function GasProjectManager() {
             const workflow = exportWorkflow();
             // Update workflow name to match project name
             workflow.name = selectedProject.title.replace(/^G8N[-_]?/i, '') || workflow.name;
+            // Attach current GAS info before saving
+            workflow.gasProjectId = selectedProject.scriptId;
+            if (webAppUrl) {
+                workflow.gasWebAppUrl = webAppUrl;
+            }
             await gasDeployService.saveWorkflowToProject(
                 selectedProject.scriptId,
                 workflow,
@@ -233,6 +249,11 @@ export function GasProjectManager() {
             const workflow = exportWorkflow();
             // Update workflow name to match project name
             workflow.name = selectedProject.title.replace(/^G8N[-_]?/i, '') || workflow.name;
+            // Attach current GAS info before syncing
+            workflow.gasProjectId = selectedProject.scriptId;
+            if (webAppUrl) {
+                workflow.gasWebAppUrl = webAppUrl;
+            }
 
             // 1. Sync files
             await gasDeployService.syncAll(
@@ -290,8 +311,23 @@ export function GasProjectManager() {
                 );
             }
 
-            // Save Web App URL to gasConfig (workflow-level, not global)
-            updateGasConfig({ webAppUrl: deployment.webAppUrl });
+            // Save Web App URL to gasConfig
+            updateGasConfig({
+                webAppUrl: deployment.webAppUrl,
+                projectId: selectedProject.scriptId,
+                syncStatus: 'synced',
+            });
+
+            // Also update the workflow in GAS with the new URL
+            setLoadingMessage('Saving URL to workflow...');
+            const workflow = exportWorkflow();
+            workflow.gasWebAppUrl = deployment.webAppUrl;
+            workflow.gasProjectId = selectedProject.scriptId;
+            await gasDeployService.saveWorkflowToProject(
+                selectedProject.scriptId,
+                workflow,
+                gasAuth.accessToken
+            );
 
             setSuccessMessage(`Deployed v${deployment.version} & Synced Key!`);
             setTimeout(() => setSuccessMessage(null), 5000);

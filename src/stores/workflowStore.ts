@@ -386,6 +386,13 @@ export const useWorkflowStore = create<WorkflowState>()(
                     workflowDescription: workflow.description || '',
                     selectedNodeId: null,
                     execution: initialExecution,
+                    // Sync GAS config from workflow if available
+                    gasConfig: {
+                        ...get().gasConfig,
+                        webAppUrl: workflow.gasWebAppUrl || get().gasConfig.webAppUrl,
+                        projectId: workflow.gasProjectId || get().gasConfig.projectId,
+                        syncStatus: workflow.gasWebAppUrl ? 'synced' : get().gasConfig.syncStatus,
+                    },
                 });
             },
         }),
