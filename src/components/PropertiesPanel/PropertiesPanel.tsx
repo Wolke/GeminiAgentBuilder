@@ -66,7 +66,7 @@ const TOOL_TYPE_BY_CATEGORY: Record<ToolCategory, { value: ToolType; label: stri
 };
 
 export function PropertiesPanel() {
-    const { nodes, selectedNodeId, updateNodeData, deleteNode, execution } = useWorkflowStore();
+    const { nodes, selectedNodeId, updateNodeData, deleteNode, execution, gasConfig } = useWorkflowStore();
 
     // State for GCP auth - updating this triggers re-render to refresh auth status
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -454,7 +454,7 @@ export function PropertiesPanel() {
 
                 {/* GAS Native Tool Status */}
                 {GAS_NATIVE_TOOLS.includes(data.toolType as GasNativeTool) && (() => {
-                    const hasWebAppUrl = !!settings.gasWebAppUrl;
+                    const hasWebAppUrl = !!gasConfig.webAppUrl;
 
                     if (hasWebAppUrl) {
                         return (

@@ -16,7 +16,7 @@ const GAS_SCOPES = [
 export function GasProjectManager() {
     const {
         settings,
-        updateSettings,
+        updateGasConfig,
         gasAuth,
         setGasAuth,
         gasLogout,
@@ -290,8 +290,8 @@ export function GasProjectManager() {
                 );
             }
 
-            // Save Web App URL to settings for GAS native tool testing
-            updateSettings({ gasWebAppUrl: deployment.webAppUrl });
+            // Save Web App URL to gasConfig (workflow-level, not global)
+            updateGasConfig({ webAppUrl: deployment.webAppUrl });
 
             setSuccessMessage(`Deployed v${deployment.version} & Synced Key!`);
             setTimeout(() => setSuccessMessage(null), 5000);

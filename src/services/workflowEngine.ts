@@ -240,7 +240,7 @@ export class WorkflowEngine {
                 // Handle function calls if present (both GCP and GAS Native)
                 if (result.functionCalls && result.functionCalls.length > 0) {
                     const functionResults: string[] = [];
-                    const { settings } = useWorkflowStore.getState();
+                    const { gasConfig } = useWorkflowStore.getState();
 
                     for (const fc of result.functionCalls) {
                         console.log(`[WorkflowEngine] Function call requested: ${fc.name}`, fc.args);
@@ -250,19 +250,19 @@ export class WorkflowEngine {
                         // Check if it's a GAS Native function
                         if (isGasNativeFunction(fc.name)) {
                             console.log(`[WorkflowEngine] Executing GAS Native function: ${fc.name}`);
-                            const gasConfig = {
-                                webAppUrl: settings.gasWebAppUrl || '',
-                                apiToken: settings.gasApiToken,
+                            const gasCallConfig = {
+                                webAppUrl: gasConfig.webAppUrl || '',
+                                apiToken: gasConfig.apiToken || undefined,
                             };
 
-                            if (!gasConfig.webAppUrl) {
+                            if (!gasCallConfig.webAppUrl) {
                                 fcResult = {
                                     error: true,
                                     message: 'GAS Web App URL not configured. Please deploy your project first.'
                                 };
                             } else {
                                 try {
-                                    fcResult = await gasToolExecutor.executeByFunctionName(fc.name, fc.args, gasConfig);
+                                    fcResult = await gasToolExecutor.executeByFunctionName(fc.name, fc.args, gasCallConfig);
                                 } catch (error: any) {
                                     fcResult = { error: true, message: error.message };
                                 }
@@ -348,17 +348,17 @@ export class WorkflowEngine {
 
                 // Check if it's a GAS Native tool
                 if (GAS_NATIVE_TOOLS.includes(toolData.toolType as GasNativeTool)) {
-                    const { settings } = useWorkflowStore.getState();
-                    const gasConfig = {
-                        webAppUrl: settings.gasWebAppUrl || '',
-                        apiToken: settings.gasApiToken,
+                    const { gasConfig } = useWorkflowStore.getState();
+                    const gasCallConfig = {
+                        webAppUrl: gasConfig.webAppUrl || '',
+                        apiToken: gasConfig.apiToken || undefined,
                     };
 
                     try {
                         const result = await gasToolExecutor.execute(
                             toolData.toolType as GasNativeTool,
                             { ...toolData.config, input: variables['last_output'] },
-                            gasConfig
+                            gasCallConfig
                         );
                         return result;
                     } catch (error: any) {
