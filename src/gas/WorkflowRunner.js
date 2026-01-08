@@ -7,6 +7,80 @@
  * - Event-driven trigger (Sheets onEdit, Form submit, etc.)
  */
 
+// GAS Native Function Declarations for Gemini Function Calling
+const GAS_NATIVE_FUNCTION_DECLARATIONS = {
+    gas_gmail: {
+        name: 'send_email_via_gas',
+        description: 'Send an email using Google Apps Script MailApp. Use this to send emails to users.',
+        parameters: {
+            type: 'object',
+            properties: {
+                to: { type: 'string', description: 'Recipient email address' },
+                subject: { type: 'string', description: 'Email subject line' },
+                body: { type: 'string', description: 'Email body content (plain text)' }
+            },
+            required: ['to', 'subject', 'body']
+        }
+    },
+    gas_calendar: {
+        name: 'manage_calendar_via_gas',
+        description: 'Manage Google Calendar events using Google Apps Script CalendarApp.',
+        parameters: {
+            type: 'object',
+            properties: {
+                action: { type: 'string', description: 'Action: create_event, list_events, or delete_event' },
+                title: { type: 'string', description: 'Event title' },
+                startTime: { type: 'string', description: 'Start time in ISO 8601 format' },
+                endTime: { type: 'string', description: 'End time in ISO 8601 format' },
+                description: { type: 'string', description: 'Event description' },
+                daysAhead: { type: 'number', description: 'Days ahead for list_events' }
+            },
+            required: ['action']
+        }
+    },
+    gas_sheets: {
+        name: 'manage_spreadsheet_via_gas',
+        description: 'Read or write data to Google Sheets.',
+        parameters: {
+            type: 'object',
+            properties: {
+                action: { type: 'string', description: 'Action: read, write, or append' },
+                spreadsheetId: { type: 'string', description: 'Spreadsheet ID' },
+                sheetName: { type: 'string', description: 'Sheet name' },
+                range: { type: 'string', description: 'Cell range (A1 notation)' },
+                values: { type: 'string', description: 'JSON array of values for write/append' }
+            },
+            required: ['action', 'spreadsheetId']
+        }
+    },
+    gas_drive: {
+        name: 'manage_drive_via_gas',
+        description: 'Manage files in Google Drive.',
+        parameters: {
+            type: 'object',
+            properties: {
+                action: { type: 'string', description: 'Action: search, create, or list' },
+                query: { type: 'string', description: 'Search query' },
+                fileName: { type: 'string', description: 'File name for create' },
+                content: { type: 'string', description: 'File content for create' },
+                folderId: { type: 'string', description: 'Folder ID' }
+            },
+            required: ['action']
+        }
+    }
+};
+
+// Map function names back to tool types
+const GAS_FUNCTION_NAME_TO_TOOL = {
+    'send_email_via_gas': 'gas_gmail',
+    'manage_calendar_via_gas': 'gas_calendar',
+    'manage_spreadsheet_via_gas': 'gas_sheets',
+    'manage_drive_via_gas': 'gas_drive'
+};
+
+// List of GAS Native tool types
+const GAS_NATIVE_TOOLS = ['gas_gmail', 'gas_calendar', 'gas_sheets', 'gas_drive'];
+
 const WorkflowRunner = {
     /**
      * Main entry point - called from any trigger source
@@ -142,7 +216,7 @@ const WorkflowRunner = {
                 return { output: context.input };
 
             case 'agent':
-                return this.executeAgentNode(node, context);
+                return this.executeAgentNode(node, context, workflow);
 
             case 'tool':
                 return this.executeToolNode(node, context);
@@ -159,11 +233,12 @@ const WorkflowRunner = {
     },
 
     /**
-     * Execute Agent node - calls Gemini API
+     * Execute Agent node - calls Gemini API with function calling support
      */
-    executeAgentNode(node, context) {
+    executeAgentNode(node, context, workflow) {
         const systemPrompt = node.data.systemPrompt || '';
         const prompt = context.currentOutput;
+        const model = node.data.model || 'gemini-2.5-flash';
 
         // Build conversation context
         let fullPrompt = prompt;
@@ -174,16 +249,86 @@ const WorkflowRunner = {
             fullPrompt = `${history}\nUser: ${prompt}`;
         }
 
-        // Call Gemini
-        const response = this.callGemini(fullPrompt, systemPrompt, node.data.model || 'gemini-2.5-flash');
+        // Collect connected GAS Native tools
+        const toolEdges = workflow.edges.filter(e => e.target === node.id && e.targetHandle === 'tools');
+        const connectedToolNodes = toolEdges
+            .map(e => workflow.nodes.find(n => n.id === e.source))
+            .filter(n => n && n.type === 'tool');
+
+        const functionDeclarations = [];
+        connectedToolNodes.forEach(toolNode => {
+            const toolType = toolNode.data.toolType;
+            if (GAS_NATIVE_TOOLS.includes(toolType) && GAS_NATIVE_FUNCTION_DECLARATIONS[toolType]) {
+                functionDeclarations.push(GAS_NATIVE_FUNCTION_DECLARATIONS[toolType]);
+            }
+        });
+
+        if (functionDeclarations.length > 0) {
+            context.logger(`[Agent] Has ${functionDeclarations.length} GAS tools available: ${functionDeclarations.map(f => f.name).join(', ')}`);
+        }
+
+        // Call Gemini with function declarations
+        let result = this.callGeminiWithTools(fullPrompt, systemPrompt, model, functionDeclarations, context);
+
+        // Handle function calls if present
+        if (result.functionCalls && result.functionCalls.length > 0) {
+            const functionResults = [];
+
+            for (const fc of result.functionCalls) {
+                context.logger(`[Agent] Executing function: ${fc.name}`);
+                const toolType = GAS_FUNCTION_NAME_TO_TOOL[fc.name];
+
+                if (toolType) {
+                    try {
+                        // Map args to tool config
+                        const config = this.mapFunctionArgsToConfig(toolType, fc.args);
+                        const toolResult = Engine.executeTool(toolType, config);
+                        functionResults.push(`Function ${fc.name} result:\n${JSON.stringify(toolResult, null, 2)}`);
+                        context.logger(`[Agent] Function ${fc.name} succeeded`);
+                    } catch (error) {
+                        functionResults.push(`Function ${fc.name} error: ${error.toString()}`);
+                        context.logger(`[Agent] Function ${fc.name} failed: ${error.toString()}`);
+                    }
+                } else {
+                    functionResults.push(`Unknown function: ${fc.name}`);
+                }
+            }
+
+            // Generate follow-up response with function results
+            const functionContext = functionResults.join('\n\n');
+            const followUpPrompt = `${fullPrompt}\n\n[System] Function executed, results:\n${functionContext}\n\nPlease respond to the user based on the results above.`;
+
+            result = this.callGemini(followUpPrompt, systemPrompt, model);
+        } else {
+            // No function calls, use the text response directly
+            result = result.text || result;
+        }
 
         // Update conversation history
         context.conversationHistory.push(
             { role: 'user', content: String(prompt) },
-            { role: 'model', content: response }
+            { role: 'model', content: String(result) }
         );
 
-        return { output: response };
+        return { output: result };
+    },
+
+    /**
+     * Map function call args to tool config
+     */
+    mapFunctionArgsToConfig(toolType, args) {
+        switch (toolType) {
+            case 'gas_gmail':
+                return { action: 'send', to: args.to, subject: args.subject, body: args.body };
+            case 'gas_calendar':
+                return { action: args.action, title: args.title, startTime: args.startTime, endTime: args.endTime, description: args.description, daysAhead: args.daysAhead };
+            case 'gas_sheets':
+                return { action: args.action, spreadsheetId: args.spreadsheetId, sheetName: args.sheetName, range: args.range, values: args.values ? JSON.parse(args.values) : undefined };
+            case 'gas_drive':
+                return { action: args.action, query: args.query, fileName: args.fileName, content: args.content, folderId: args.folderId };
+            default:
+                return args;
+        }
     },
 
     /**
@@ -261,6 +406,77 @@ const WorkflowRunner = {
         }
 
         return text;
+    },
+
+    /**
+     * Call Gemini API with function declarations (for function calling)
+     */
+    callGeminiWithTools(prompt, systemPrompt, model, functionDeclarations, context) {
+        const apiKey = this.getApiKey();
+        if (!apiKey) {
+            throw new Error('Gemini API Key not configured. Please sync from Gemini Agent Builder.');
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ role: 'user', parts: [{ text: prompt }] }]
+        };
+
+        if (systemPrompt) {
+            payload.systemInstruction = { parts: [{ text: systemPrompt }] };
+        }
+
+        // Add function declarations if provided
+        if (functionDeclarations && functionDeclarations.length > 0) {
+            payload.tools = [{
+                functionDeclarations: functionDeclarations
+            }];
+            context.logger(`[Gemini] Sending request with ${functionDeclarations.length} function declarations`);
+        }
+
+        const options = {
+            method: 'post',
+            contentType: 'application/json',
+            payload: JSON.stringify(payload),
+            muteHttpExceptions: true
+        };
+
+        const response = UrlFetchApp.fetch(url, options);
+        const data = JSON.parse(response.getContentText());
+
+        if (data.error) {
+            throw new Error(data.error.message || 'Gemini API error');
+        }
+
+        const candidate = data.candidates?.[0];
+        if (!candidate) {
+            throw new Error('No candidates in Gemini response');
+        }
+
+        // Check for function calls
+        const parts = candidate.content?.parts || [];
+        const functionCalls = [];
+        let textResponse = '';
+
+        for (const part of parts) {
+            if (part.functionCall) {
+                functionCalls.push({
+                    name: part.functionCall.name,
+                    args: part.functionCall.args || {}
+                });
+            }
+            if (part.text) {
+                textResponse += part.text;
+            }
+        }
+
+        if (functionCalls.length > 0) {
+            context.logger(`[Gemini] Received ${functionCalls.length} function call(s): ${functionCalls.map(f => f.name).join(', ')}`);
+            return { functionCalls, text: textResponse };
+        }
+
+        return { text: textResponse, functionCalls: [] };
     },
 
     /**
