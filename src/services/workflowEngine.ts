@@ -3,7 +3,7 @@
 import { useWorkflowStore } from '../stores/workflowStore';
 import { generateContent, initializeGemini } from './geminiService';
 import { getGcpFunctionDeclarations, executeGcpFunction } from './gcpApiExecutor';
-import { gasToolExecutor } from './gasToolExecutor';
+import { gasToolExecutor, getGasNativeFunctionDeclarations, isGasNativeFunction } from './gasToolExecutor';
 import { GCP_API_TOOLS, GAS_NATIVE_TOOLS } from '../types/nodes';
 import type {
     WorkflowNode,
@@ -158,6 +158,8 @@ export class WorkflowEngine {
 
                 // Collect GCP tools for function calling
                 const gcpTools: GcpApiTool[] = [];
+                // Collect GAS Native tools for function calling
+                const gasNativeTools: GasNativeTool[] = [];
 
                 // Helper to merge tool config
                 connectedTools.forEach(toolNode => {
@@ -173,12 +175,24 @@ export class WorkflowEngine {
                     if (GCP_API_TOOLS.includes(tData.toolType as GcpApiTool)) {
                         gcpTools.push(tData.toolType as GcpApiTool);
                     }
+
+                    // Check if it's a GAS Native tool
+                    if (GAS_NATIVE_TOOLS.includes(tData.toolType as GasNativeTool)) {
+                        gasNativeTools.push(tData.toolType as GasNativeTool);
+                    }
                 });
 
                 // Add GCP function declarations to toolsConfig
                 if (gcpTools.length > 0) {
                     const gcpFunctions = getGcpFunctionDeclarations(gcpTools);
                     toolsConfig.functionDeclarations.push(...gcpFunctions);
+                }
+
+                // Add GAS Native function declarations to toolsConfig
+                if (gasNativeTools.length > 0) {
+                    const gasFunctions = getGasNativeFunctionDeclarations(gasNativeTools);
+                    toolsConfig.functionDeclarations.push(...gasFunctions);
+                    console.log('[WorkflowEngine] Added GAS Native function declarations:', gasFunctions.map(f => f.name));
                 }
 
                 // Fallback to legacy checkbox property if no connections
@@ -223,13 +237,42 @@ export class WorkflowEngine {
 
                 let result = await generateContent(prompt, agentData.systemPrompt, toolsConfig);
 
-                // Handle GCP function calls if present
+                // Handle function calls if present (both GCP and GAS Native)
                 if (result.functionCalls && result.functionCalls.length > 0) {
                     const functionResults: string[] = [];
+                    const { settings } = useWorkflowStore.getState();
 
                     for (const fc of result.functionCalls) {
-                        console.log(`[WorkflowEngine] Executing GCP function: ${fc.name}`, fc.args);
-                        const fcResult = await executeGcpFunction(fc.name, fc.args);
+                        console.log(`[WorkflowEngine] Function call requested: ${fc.name}`, fc.args);
+
+                        let fcResult: unknown;
+
+                        // Check if it's a GAS Native function
+                        if (isGasNativeFunction(fc.name)) {
+                            console.log(`[WorkflowEngine] Executing GAS Native function: ${fc.name}`);
+                            const gasConfig = {
+                                webAppUrl: settings.gasWebAppUrl || '',
+                                apiToken: settings.gasApiToken,
+                            };
+
+                            if (!gasConfig.webAppUrl) {
+                                fcResult = {
+                                    error: true,
+                                    message: 'GAS Web App URL not configured. Please deploy your project first.'
+                                };
+                            } else {
+                                try {
+                                    fcResult = await gasToolExecutor.executeByFunctionName(fc.name, fc.args, gasConfig);
+                                } catch (error: any) {
+                                    fcResult = { error: true, message: error.message };
+                                }
+                            }
+                        } else {
+                            // It's a GCP function
+                            console.log(`[WorkflowEngine] Executing GCP function: ${fc.name}`);
+                            fcResult = await executeGcpFunction(fc.name, fc.args);
+                        }
+
                         functionResults.push(`Function ${fc.name} result:\n${JSON.stringify(fcResult, null, 2)}`);
                     }
 

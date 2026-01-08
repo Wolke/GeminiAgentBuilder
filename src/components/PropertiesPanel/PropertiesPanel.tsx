@@ -494,59 +494,65 @@ export function PropertiesPanel() {
                     );
                 })()}
 
-                {/* GAS Gmail Configuration */}
-                {data.toolType === 'gas_gmail' && (
-                    <>
-                        <div className="prop-group">
-                            <label>Action</label>
-                            <select
-                                value={data.config?.action || 'send'}
-                                onChange={(e) => handleUpdate({
-                                    config: { ...data.config, action: e.target.value }
-                                })}
-                            >
-                                <option value="send">Send Email</option>
-                                <option value="get_quota">Get Remaining Quota</option>
-                            </select>
+                {/* GAS Native Tool Info */}
+                {GAS_NATIVE_TOOLS.includes(data.toolType as GasNativeTool) && (
+                    <div className="prop-group">
+                        <label>How It Works</label>
+                        <div style={{
+                            padding: '12px',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            color: '#aaa',
+                            lineHeight: '1.5'
+                        }}>
+                            {data.toolType === 'gas_gmail' && (
+                                <>
+                                    <strong style={{ color: '#34a853' }}>📧 Gmail Tool</strong>
+                                    <p style={{ margin: '8px 0 0 0' }}>
+                                        Connect this tool to an Agent node. When you ask the AI to send an email,
+                                        it will automatically call this tool with the recipient, subject, and body.
+                                    </p>
+                                    <p style={{ margin: '8px 0 0 0', fontStyle: 'italic' }}>
+                                        Example: "幫我寄一封測試信給 test@example.com"
+                                    </p>
+                                </>
+                            )}
+                            {data.toolType === 'gas_calendar' && (
+                                <>
+                                    <strong style={{ color: '#34a853' }}>📆 Calendar Tool</strong>
+                                    <p style={{ margin: '8px 0 0 0' }}>
+                                        Connect this tool to an Agent node. The AI can create, list, or delete calendar events.
+                                    </p>
+                                    <p style={{ margin: '8px 0 0 0', fontStyle: 'italic' }}>
+                                        Example: "幫我建立一個明天下午 3 點的會議"
+                                    </p>
+                                </>
+                            )}
+                            {data.toolType === 'gas_sheets' && (
+                                <>
+                                    <strong style={{ color: '#34a853' }}>📊 Sheets Tool</strong>
+                                    <p style={{ margin: '8px 0 0 0' }}>
+                                        Connect this tool to an Agent node. The AI can read or write data to Google Sheets.
+                                    </p>
+                                    <p style={{ margin: '8px 0 0 0', fontStyle: 'italic' }}>
+                                        Example: "讀取試算表 ID xxx 的 A1:D10 資料"
+                                    </p>
+                                </>
+                            )}
+                            {data.toolType === 'gas_drive' && (
+                                <>
+                                    <strong style={{ color: '#34a853' }}>💾 Drive Tool</strong>
+                                    <p style={{ margin: '8px 0 0 0' }}>
+                                        Connect this tool to an Agent node. The AI can search, list, or create files in Drive.
+                                    </p>
+                                    <p style={{ margin: '8px 0 0 0', fontStyle: 'italic' }}>
+                                        Example: "搜尋 Drive 中名為 report 的檔案"
+                                    </p>
+                                </>
+                            )}
                         </div>
-                        {(data.config?.action === 'send' || !data.config?.action) && (
-                            <>
-                                <div className="prop-group">
-                                    <label>To</label>
-                                    <input
-                                        type="email"
-                                        value={data.config?.to || ''}
-                                        onChange={(e) => handleUpdate({
-                                            config: { ...data.config, to: e.target.value }
-                                        })}
-                                        placeholder="recipient@example.com"
-                                    />
-                                </div>
-                                <div className="prop-group">
-                                    <label>Subject</label>
-                                    <input
-                                        type="text"
-                                        value={data.config?.subject || ''}
-                                        onChange={(e) => handleUpdate({
-                                            config: { ...data.config, subject: e.target.value }
-                                        })}
-                                        placeholder="Email subject"
-                                    />
-                                </div>
-                                <div className="prop-group">
-                                    <label>Body</label>
-                                    <textarea
-                                        value={data.config?.body || ''}
-                                        onChange={(e) => handleUpdate({
-                                            config: { ...data.config, body: e.target.value }
-                                        })}
-                                        rows={4}
-                                        placeholder="Email content..."
-                                    />
-                                </div>
-                            </>
-                        )}
-                    </>
+                    </div>
                 )}
             </>
         );
