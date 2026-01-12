@@ -1,10 +1,12 @@
 // GAS Project Manager - UI for managing G8N projects in Google Apps Script
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useWorkflowStore } from '../../stores';
 import { gasDeployService } from '../../services/gasDeployService';
 import { GcpAuthService } from '../../services/gcpAuthService';
 import type { GasProject } from '../../types/gas';
+import type { ToolNodeData } from '../../types/nodes';
+import { GAS_NATIVE_TOOLS } from '../../types/nodes';
 import './GasProjectManager.css';
 
 // Required OAuth scopes
@@ -23,6 +25,7 @@ export function GasProjectManager() {
         exportWorkflow,
         loadWorkflowFromGas,
         workflowName,
+        nodes,
     } = useWorkflowStore();
 
     const [projects, setProjects] = useState<GasProject[]>([]);
@@ -34,6 +37,21 @@ export function GasProjectManager() {
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [webAppUrl, setWebAppUrl] = useState<string | null>(null);
+    const [authHintDismissed, setAuthHintDismissed] = useState(() => {
+        // Check localStorage on init
+        return localStorage.getItem('gas-auth-hint-dismissed') === 'true';
+    });
+
+    // Check if workflow uses GAS Native tools
+    const usesGasNativeTools = useMemo(() => {
+        return nodes.some(node => {
+            if (node.type === 'tool') {
+                const toolData = node.data as ToolNodeData;
+                return GAS_NATIVE_TOOLS.includes(toolData.toolType as typeof GAS_NATIVE_TOOLS[number]);
+            }
+            return false;
+        });
+    }, [nodes]);
 
     // Check token expiration
     const isTokenValid = gasAuth.isLoggedIn &&
@@ -123,6 +141,29 @@ export function GasProjectManager() {
 
             if (workflow) {
                 loadWorkflowFromGas(workflow);
+
+                // Also fetch Web App URL from deployments
+                try {
+                    const deployments = await gasDeployService.listDeployments(
+                        selectedProject.scriptId,
+                        gasAuth.accessToken
+                    );
+                    // Find the first deployment with a Web App URL
+                    const webAppDeployment = deployments.find(d => d.webAppUrl);
+                    if (webAppDeployment?.webAppUrl) {
+                        setWebAppUrl(webAppDeployment.webAppUrl);
+                        updateGasConfig({ webAppUrl: webAppDeployment.webAppUrl });
+                        // Reset auth hint dismissed state when loading a new project
+                        setAuthHintDismissed(false);
+                        localStorage.removeItem('gas-auth-hint-dismissed');
+                    } else {
+                        setWebAppUrl(null);
+                    }
+                } catch {
+                    // Ignore deployment fetch errors - project may not be deployed
+                    setWebAppUrl(null);
+                }
+
                 setSuccessMessage(`Loaded: ${workflow.name}`);
                 setTimeout(() => setSuccessMessage(null), 3000);
             } else {
@@ -439,6 +480,20 @@ export function GasProjectManager() {
                         <a href={webAppUrl} target="_blank" rel="noopener noreferrer">
                             {webAppUrl.slice(0, 50)}...
                         </a>
+                        {usesGasNativeTools && !authHintDismissed && (
+                            <div className="gas-auth-hint">
+                                <span>⚠️ This workflow uses GAS Native tools. Click the Web App link above to authorize first.</span>
+                                <button
+                                    className="gas-auth-dismiss-btn"
+                                    onClick={() => {
+                                        setAuthHintDismissed(true);
+                                        localStorage.setItem('gas-auth-hint-dismissed', 'true');
+                                    }}
+                                >
+                                    Authorized ✓
+                                </button>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

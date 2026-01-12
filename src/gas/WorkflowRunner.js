@@ -516,3 +516,17 @@ function setGeminiApiKey(apiKey) {
     PropertiesService.getScriptProperties().setProperty('GEMINI_API_KEY', apiKey);
     return { success: true };
 }
+
+/**
+ * Get workflow info - called from TestDialog.html
+ */
+function getWorkflowInfo() {
+    const workflow = WorkflowRunner.getWorkflow();
+    if (workflow) {
+        return {
+            name: workflow.name || 'Untitled Workflow',
+            description: workflow.description || ''
+        };
+    }
+    return { name: 'G8N Workflow Test', description: '' };
+}

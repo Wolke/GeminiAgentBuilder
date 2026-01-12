@@ -327,7 +327,7 @@
 <body>
     <div class="header">
         <span style="font-size: 24px;">🤖</span>
-        <h1>G8N Workflow Test</h1>
+        <h1 id="workflowTitle">G8N Workflow Test</h1>
         <div class="status" id="status">Connected</div>
     </div>
 
@@ -546,6 +546,24 @@
                 })
                 .checkSettings();
         }
+
+        // Load workflow name on page load
+        function loadWorkflowName() {
+            google.script.run
+                .withSuccessHandler(function (result) {
+                    if (result && result.name) {
+                        document.getElementById('workflowTitle').textContent = result.name;
+                        document.title = result.name + ' - G8N Test';
+                    }
+                })
+                .withFailureHandler(function (error) {
+                    console.log('Failed to load workflow name:', error);
+                })
+                .getWorkflowInfo();
+        }
+
+        // Initialize on page load
+        loadWorkflowName();
     </script>
 </body>
 

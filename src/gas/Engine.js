@@ -58,6 +58,32 @@ const Engine = {
             default:
                 throw new Error(`Tool type not supported in GAS: ${toolType}`);
         }
+    },
+
+    /**
+     * Memory Management
+     */
+    memory: {
+        get(key) {
+            const props = PropertiesService.getScriptProperties();
+            const value = props.getProperty(key);
+            try {
+                return value ? JSON.parse(value) : null;
+            } catch (e) {
+                console.error('Error parsing memory key ' + key, e);
+                return null;
+            }
+        },
+
+        set(key, value) {
+            const props = PropertiesService.getScriptProperties();
+            if (value === null || value === undefined) {
+                props.deleteProperty(key);
+            } else {
+                props.setProperty(key, JSON.stringify(value));
+            }
+            return true;
+        }
     }
 };
 

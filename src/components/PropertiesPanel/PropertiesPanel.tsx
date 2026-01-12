@@ -715,6 +715,18 @@ export function PropertiesPanel() {
                     placeholder="chat_history"
                 />
                 <small style={{ color: '#888' }}>localStorage key for conversation history</small>
+                <div style={{
+                    marginTop: '8px',
+                    padding: '8px',
+                    background: 'rgba(250, 166, 26, 0.1)',
+                    border: '1px solid #faa61a',
+                    borderRadius: '6px',
+                    fontSize: '11px',
+                    color: '#faa61a'
+                }}>
+                    ⚠️ <b>Note for Deployment:</b><br />
+                    When running on Google Apps Script, this data is saved to <b>Script Properties</b> (max 9KB limit).
+                </div>
             </div>
             <div className="prop-group">
                 <label>Max Messages: {data.maxMessages || 10}</label>
