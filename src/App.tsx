@@ -28,7 +28,7 @@ function App() {
         <header className="app-header">
           <div className="app-logo">
             <span className="logo-icon">✨</span>
-            <h1>Gemini Agent Builder</h1>
+            <h1>G8N: Gemini Workflow Orchestrator</h1>
           </div>
           <div className="mode-toggle">
             <button
